@@ -568,14 +568,25 @@ function toggleVoice(){
   recognition.onerror=()=>{listening=false;btn.classList.remove('listening');btn.textContent='🎙️';};
   recognition.onresult=(e)=>{
     const said=e.results[0][0].transcript;
-    // 尝试提取金额
+    // 提取金额
     const numMatch=said.match(/[\d.]+/);
     if(numMatch){document.getElementById('amt').value=parseFloat(numMatch[0]);}
-    if(said.includes('餐饮')||said.includes('饭')||said.includes('吃'))document.getElementById('fcat').value='🍜 餐饮';
-    else if(said.includes('交通')||said.includes('车')||said.includes('地铁'))document.getElementById('fcat').value='🚌 交通';
-    else if(said.includes('购物')||said.includes('买'))document.getElementById('fcat').value='🛒 购物';
+    // 智能匹配分类：遍历所有分类，检查语音中是否提到
+    let matched=null,matchedType=null;
+    ['expense','income'].forEach(type=>{
+      cats[type].forEach(cat=>{
+        const name=cat.replace(/^[^\s]+\s/,''); // 去掉emoji
+        if(said.includes(name)){
+          if(!matched||name.length>matched.length){matched=cat;matchedType=type;}
+        }
+      });
+    });
+    if(matched){
+      if(matchedType!==ctype){setType(matchedType);}
+      document.getElementById('fcat').value=matched;
+    }
     document.getElementById('fnote').value=said;
-    toast('识别：'+said);
+    toast('识别：'+said+(matched?' → '+matched:''));
     stopVoice();
   };
   recognition.start();
