@@ -497,22 +497,6 @@
   <!-- Tab 4: 我的 -->
   <div class="tab-content" id="tabMe">
     <div class="set-card">
-      <div class="set-row" onclick="toggleAdvance()">
-        <span>⚙️ 高级设置</span>
-        <span class="sarr" id="advanceArrow" style="transition:transform 0.2s;">›</span>
-      </div>
-      <div id="advancePanel" style="display:none;padding:12px 16px 16px;border-top:1px solid var(--border2);">
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <span style="font-size:12px;color:var(--text2);">接入豆包大模型，AI 助手更智能。Key 仅存本地。</span>
-          <div style="display:flex;gap:8px;">
-            <input id="doubaoKey" type="password" placeholder="API Key" style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;outline:none;font-family:inherit;background:var(--card2);color:var(--text);">
-            <button onclick="saveDoubaoKey()" style="padding:10px 16px;border-radius:10px;border:none;background:var(--pri);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">保存</button>
-          </div>
-          <span id="doubaoStatus" style="font-size:12px;font-weight:600;"></span>
-        </div>
-      </div>
-    </div>
-    <div class="set-card">
       <div class="stitle">外观</div>
       <div class="set-row">
         <span>🌙 暗色模式</span>
@@ -660,75 +644,6 @@ function toggleDark(){
 function initDark(){
   const saved=localStorage.getItem('zb2_dark');
   if(saved==='1'){document.getElementById('darkToggle').checked=true;document.documentElement.setAttribute('data-theme','dark');document.querySelector('meta[name="theme-color"]').content='#1A1D25';}
-}
-
-// ===== 豆包 API =====
-let doubaoKey='',doubaoModel='doubao-seed-1-6-251015';
-
-function loadDoubao(){
-  doubaoKey=localStorage.getItem('zb2_doubao_key')||'';
-  document.getElementById('doubaoKey').value=doubaoKey;
-  updateDoubaoStatus();
-}
-function saveDoubaoKey(){
-  doubaoKey=document.getElementById('doubaoKey').value.trim();
-  localStorage.setItem('zb2_doubao_key',doubaoKey);
-  updateDoubaoStatus();
-  toast(doubaoKey?'豆包 Key 已保存 ✓':'已清除 Key，将使用本地引擎');
-}
-function updateDoubaoStatus(){
-  const el=document.getElementById('doubaoStatus');
-  if(doubaoKey){el.textContent='✅ 已配置豆包大模型';}
-  else{el.textContent='未配置（默认使用本地 AI）';}
-}
-
-function toggleAdvance(){
-  const panel=document.getElementById('advancePanel');
-  const arrow=document.getElementById('advanceArrow');
-  if(panel.style.display==='none'){panel.style.display='block';arrow.style.transform='rotate(90deg)';}
-  else{panel.style.display='none';arrow.style.transform='';}
-}
-
-async function callDoubao(question){
-  // 构建财务上下文
-  const mr=records.filter(r=>r.date.startsWith(cmonth));
-  let inc=0,exp=0;mr.forEach(r=>{if(r.type==='income')inc+=r.amount;else exp+=r.amount;});
-  const catMap={};mr.filter(r=>r.type==='expense').forEach(r=>{const cn=r.category.replace(/^[^\s]+\s/,'');catMap[cn]=(catMap[cn]||0)+r.amount;});
-  const topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]+' ¥'+e[1].toFixed(0)).join(', ');
-  const budgetRemain=budget?budget-exp:null;
-
-  const context=`你是记账App里的AI助手，请根据用户的财务数据回答用户的问题。回复简洁友好，1-3句话，可以加emoji。
-
-当前月份：${cmonth.replace('-','年')+'月'}
-收入：¥${inc.toFixed(2)}
-支出：¥${exp.toFixed(2)}
-结余：¥${(inc-exp).toFixed(2)}
-${budgetRemain!==null?'预算：¥'+budget.toFixed(0)+' / 剩余：¥'+budgetRemain.toFixed(0):'预算：未设置'}
-支出排行：${topCats||'暂无'}
-总记录数：${records.length} 条
-本月记录数：${mr.length} 条
-连续记账：${streak} 天
-
-用户问题：${question}`;
-
-  const resp=await fetch('https://zhangben-seven.vercel.app/api/chat',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      key:doubaoKey,
-      model:doubaoModel,
-      messages:[
-        {role:'system',content:'你是一个专业的记账助手，叫小账。用温暖鼓励的语气，回答简洁有力（2-4句话）。可以适当使用emoji。'},
-        {role:'user',content:context}
-      ]
-    })
-  });
-  if(!resp.ok){
-    const err=await resp.text();
-    throw new Error('API错误 ('+resp.status+'): '+err.slice(0,100));
-  }
-  const data=await resp.json();
-  return data.choices[0].message.content;
 }
 
 // ===== 问候语 =====
@@ -1195,31 +1110,14 @@ function toggleAIVoice(){
 }
 function stopAIVoice(){if(aiRecognition){try{aiRecognition.stop();}catch(e){}}aiListening=false;const btn=document.getElementById('aiVoiceBtn');btn.textContent='🎤';btn.style.background='';}
 
-async function sendAI(preset,autoSpeak){
+function sendAI(preset,autoSpeak){
   const input=document.getElementById('aiInput');
   const text=(preset||input.value).trim();
   if(!text)return;
   if(!preset){input.value='';}
   addAIMsg('user',text);
-
-  if(doubaoKey){
-    const typingEl=document.createElement('div');typingEl.className='ai-msg assistant';typingEl.id='aiTyping';
-    typingEl.innerHTML='<div class="ai-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);">🤖</div><div><div class="ai-bubble" style="color:var(--text2);">思考中...</div></div>';
-    document.getElementById('aiMsgs').appendChild(typingEl);
-    document.getElementById('aiMsgs').scrollTop=document.getElementById('aiMsgs').scrollHeight;
-    try{
-      const reply=await callDoubao(text);
-      const t=document.getElementById('aiTyping');if(t)t.remove();
-      addAIMsg('assistant',reply,autoSpeak);
-    }catch(e){
-      const t=document.getElementById('aiTyping');if(t)t.remove();
-      addAIMsg('assistant','😅 豆包调用失败，切换到本地引擎...');
-      setTimeout(()=>addAIMsg('assistant',nlu(text)),300);
-    }
-  }else{
-    const reply=nlu(text);
-    setTimeout(()=>addAIMsg('assistant',reply,autoSpeak),400+Math.random()*600);
-  }
+  const reply=nlu(text);
+  setTimeout(()=>addAIMsg('assistant',reply,autoSpeak),300+Math.random()*500);
   renderSuggestions();
 }
 
@@ -1363,7 +1261,7 @@ function nlu(q){
 // ===== 初始化 =====
 function init(){
   document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
-  initDark();loadDoubao();initFabDrag();tick();setInterval(tick,3600000);
+  initDark();initFabDrag();tick();setInterval(tick,3600000);
   load();setType('expense');updateCatSelect();refresh();checkStreak();
   document.addEventListener('click',function(e){if(!e.target.closest('.rec-item')){document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));}});
   window.addEventListener('resize',()=>{if(document.getElementById('tabStats').classList.contains('active'))renderTrend();});
