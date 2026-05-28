@@ -1086,21 +1086,39 @@ function preloadVoices(){
     cachedVoices=speechSynthesis.getVoices();
     renderVoiceList();
   };
-  selectedVoiceURI=localStorage.getItem('zb2_voice')||'';
+  // 自动推荐最佳女声
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  const best=zh.find(v=>v.name.includes('Ting-Ting'))||zh.find(v=>v.name.includes('Huihui'))||zh.find(v=>v.name.includes('Xiaoxiao'))||zh.find(v=>v.name.includes('Mei-Jia'))||zh.find(v=>isFemaleVoice(v.name));
+  if(best&&!localStorage.getItem('zb2_voice')){selectedVoiceURI=best.voiceURI;localStorage.setItem('zb2_voice',best.voiceURI);}
+  else{selectedVoiceURI=localStorage.getItem('zb2_voice')||'';}
+}
+
+// 识别女声关键词
+function isFemaleVoice(name){
+  const kw=['Ting','Tingting','Huihui','Mei','Meijia','Xiaoxiao','Sin-Ji','Ya-Ling','Hanhan','Li-Mu','Ting-Ting','Mei-Jia','Yue','Yating','Shasha','Xiaomeng','Nuannuan','Tiantian','Wanwan'];
+  return kw.some(k=>name.includes(k));
+}
+function getVoiceLabel(v){
+  if(isFemaleVoice(v.name))return '👩 女声';
+  if(/male|nan|男/i.test(v.name))return '👨 男声';
+  return v.name.includes('Google')?'🔊 通用':'📢 通用';
 }
 
 function renderVoiceList(){
   const el=document.getElementById('voiceList');
   const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
   if(!zh.length){
-    el.innerHTML='<div class="set-row" style="color:var(--text2);cursor:default;">未找到中文语音</div>';
+    el.innerHTML='<div class="set-row" style="color:var(--text2);cursor:default;flex-direction:column;gap:4px;"><span>未找到中文语音</span><span style="font-size:11px;">iOS: 系统设置→辅助功能→朗读内容→语音→下载中文(增强)</span></div>';
     return;
   }
+  // 女声排前面
+  zh.sort((a,b)=>(isFemaleVoice(b.name)?1:0)-(isFemaleVoice(a.name)?1:0));
   el.innerHTML=zh.map(v=>{
     const sel=v.voiceURI===selectedVoiceURI;
+    const label=getVoiceLabel(v);
     return `<div class="set-row" onclick="selectVoice('${v.voiceURI.replace(/'/g,'')}')" style="${sel?'background:var(--pri-light);':''}">
-      <span>${sel?'✅ ':''}${v.name} <span style="font-size:11px;color:var(--text2);">${v.lang}</span></span>
-      <button onclick="event.stopPropagation();previewVoice('${v.voiceURI.replace(/'/g,'')}')" style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 8px;">🔊</button>
+      <span>${sel?'✅ ':''}${v.name}<span style="font-size:10px;color:var(--text2);margin-left:4px;">${label}</span></span>
+      <button onclick="event.stopPropagation();previewVoice('${v.voiceURI.replace(/'/g,'')}')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;">🔊</button>
     </div>`;
   }).join('');
 }
@@ -1116,7 +1134,7 @@ function previewVoice(uri){
   const v=cachedVoices.find(v=>v.voiceURI===uri);
   if(!v)return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance('你好，我是你的记账小助手');
+  const u=new SpeechSynthesisUtterance('你好呀，我是你的记账小助手，很高兴陪着你');
   u.voice=v;u.rate=0.9;u.volume=1;
   speechSynthesis.speak(u);
 }
