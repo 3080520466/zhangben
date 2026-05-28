@@ -55,7 +55,7 @@
   /* 月份切换 */
   .month-bar {
     display: flex; align-items: center; justify-content: center; gap: 20px;
-    padding: 6px 0 14px;
+    padding: 2px 0 10px;
   }
   .month-bar .mbtn {
     width: 34px; height: 34px; border-radius: 50%;
@@ -68,7 +68,7 @@
   .month-bar .mlabel { font-size: 17px; font-weight: 600; min-width: 100px; text-align: center; }
 
   /* 汇总卡片 */
-  .summary-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .summary-row { display: flex; gap: 10px; margin-bottom: 10px; }
   .sum-item {
     flex: 1; background: var(--card); border-radius: var(--radius);
     padding: 14px; box-shadow: var(--shadow); text-align: center;
@@ -84,7 +84,7 @@
   /* 预算条 */
   .budget-bar {
     background: var(--card); border-radius: var(--radius);
-    padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 12px;
+    padding: 12px 16px; box-shadow: var(--shadow); margin-bottom: 10px;
   }
   .budget-bar .bhead {
     display: flex; justify-content: space-between; align-items: center;
@@ -114,7 +114,7 @@
   /* 记一笔：表单 */
   .form-card {
     background: var(--card); border-radius: var(--radius);
-    padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px;
+    padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 10px;
   }
   .type-row { display: flex; gap: 8px; margin-bottom: 12px; }
   .type-row button {
@@ -128,16 +128,16 @@
   .form-card .fr { display: flex; gap: 8px; margin-bottom: 8px; }
   .form-card .fr:last-child { margin-bottom: 0; }
   .form-card input, .form-card select {
-    padding: 11px 14px; border-radius: 12px; border: 1.5px solid var(--border);
+    padding: 11px 12px; border-radius: 12px; border: 1.5px solid var(--border);
     font-size: 16px; outline: none; font-family: inherit;
     background: #FAFBFC; color: var(--text);
     transition: border-color 0.15s; -webkit-appearance: none;
   }
   .form-card input:focus, .form-card select:focus { border-color: var(--pri); }
-  .form-card .amt { flex: 2; font-size: 22px; font-weight: 700; text-align: center; }
-  .form-card .fcat { flex: 1; }
-  .form-card .fnote { flex: 1; }
-  .form-card .fdate { flex: 1; }
+  .form-card .amt { font-size: 24px; font-weight: 700; text-align: center; }
+  .form-card .fcat { flex: 1; min-width: 0; }
+  .form-card .fnote { flex: 1; min-width: 0; }
+  .form-card .fdate { flex: 1; min-width: 0; }
   .form-card .add-btn {
     width: 100%; padding: 13px; border-radius: 12px; border: none;
     font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
@@ -146,8 +146,8 @@
   .form-card .add-btn:active { transform: scale(0.97); }
 
   /* 快速模板 */
-  .tpl-section { margin-bottom: 12px; }
-  .tpl-section .tlabel { font-size: 13px; color: var(--sub); margin-bottom: 8px; padding-left: 4px; }
+  .tpl-section { margin-bottom: 8px; }
+  .tpl-section .tlabel { font-size: 12px; color: var(--sub); margin-bottom: 6px; padding-left: 4px; }
   .tpl-chips { display: flex; gap: 8px; flex-wrap: wrap; }
   .tpl-chip {
     padding: 8px 14px; border-radius: 20px; border: 1.5px solid var(--border);
@@ -403,12 +403,14 @@
         <button id="btnInc" onclick="setType('income')">🟢 收入</button>
       </div>
       <div class="fr">
-        <input class="amt" id="amt" type="number" placeholder="0.00" step="0.01" min="0.01" inputmode="decimal" onkeydown="if(event.key==='Enter')addRecord()">
-        <input class="fdate" id="fdate" type="date">
+        <input class="amt" id="amt" type="number" placeholder="输入金额" step="0.01" min="0.01" inputmode="decimal" onkeydown="if(event.key==='Enter')addRecord()">
       </div>
       <div class="fr">
         <select class="fcat" id="fcat"></select>
-        <input class="fnote" id="fnote" type="text" placeholder="备注 (选填)">
+        <input class="fdate" id="fdate" type="date">
+      </div>
+      <div class="fr">
+        <input class="fnote" id="fnote" type="text" placeholder="添加备注...">
       </div>
       <button class="add-btn" id="addBtn" onclick="addRecord()">记一笔</button>
     </div>
