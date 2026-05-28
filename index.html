@@ -495,16 +495,19 @@
   <!-- Tab 4: 我的 -->
   <div class="tab-content" id="tabMe">
     <div class="set-card">
-      <div class="stitle">AI 设置</div>
-      <div class="set-row" style="flex-direction:column;align-items:stretch;gap:8px;cursor:default;">
-        <span style="font-size:13px;color:var(--text2);">接入豆包大模型后，AI 助手将拥有真正的智能对话能力。不填则使用本地引擎。</span>
-        <div style="display:flex;gap:8px;">
-          <input id="doubaoKey" type="password" placeholder="输入豆包 API Key..." style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;outline:none;font-family:inherit;background:var(--card2);color:var(--text);">
-          <button onclick="saveDoubaoKey()" style="padding:10px 16px;border-radius:10px;border:none;background:var(--pri);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">保存</button>
+      <div class="set-row" onclick="toggleAdvance()">
+        <span>⚙️ 高级设置</span>
+        <span class="sarr" id="advanceArrow" style="transition:transform 0.2s;">›</span>
+      </div>
+      <div id="advancePanel" style="display:none;padding:12px 16px 16px;border-top:1px solid var(--border2);">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-size:12px;color:var(--text2);">接入豆包大模型，AI 助手更智能。Key 仅存本地。</span>
+          <div style="display:flex;gap:8px;">
+            <input id="doubaoKey" type="password" placeholder="API Key" style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;outline:none;font-family:inherit;background:var(--card2);color:var(--text);">
+            <button onclick="saveDoubaoKey()" style="padding:10px 16px;border-radius:10px;border:none;background:var(--pri);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">保存</button>
+          </div>
+          <span id="doubaoStatus" style="font-size:12px;font-weight:600;"></span>
         </div>
-        <input id="doubaoModel" type="text" placeholder="模型 (默认: doubao-seed-1-6-251015)" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;outline:none;font-family:inherit;background:var(--card2);color:var(--text);">
-        <span style="font-size:11px;color:var(--text2);">获取：<a href="https://console.volcengine.com/ark" target="_blank" style="color:var(--pri);">火山引擎 Ark</a> → 创建推理接入点 → 复制 Key<br>Key 仅保存在浏览器本地，不会上传到第三方。</span>
-        <span id="doubaoStatus" style="font-size:12px;font-weight:600;display:none;"></span>
       </div>
     </div>
     <div class="set-card">
@@ -661,26 +664,27 @@ let doubaoKey='',doubaoModel='doubao-seed-1-6-251015';
 
 function loadDoubao(){
   doubaoKey=localStorage.getItem('zb2_doubao_key')||'';
-  doubaoModel=localStorage.getItem('zb2_doubao_model')||'doubao-seed-1-6-251015';
   document.getElementById('doubaoKey').value=doubaoKey;
-  document.getElementById('doubaoModel').value=doubaoModel;
   updateDoubaoStatus();
 }
 function saveDoubaoKey(){
   doubaoKey=document.getElementById('doubaoKey').value.trim();
-  doubaoModel=document.getElementById('doubaoModel').value.trim()||'doubao-seed-1-6-251015';
   localStorage.setItem('zb2_doubao_key',doubaoKey);
-  localStorage.setItem('zb2_doubao_model',doubaoModel);
   updateDoubaoStatus();
   toast(doubaoKey?'豆包 Key 已保存 ✓':'已清除 Key，将使用本地引擎');
 }
 function updateDoubaoStatus(){
   const el=document.getElementById('doubaoStatus');
-  if(doubaoKey){
-    el.style.display='block';el.style.color='var(--green)';el.textContent='✅ 已配置 · 模型: '+doubaoModel;
-  }else{
-    el.style.display='block';el.style.color='var(--text2)';el.textContent='⚠️ 未配置，将使用本地引擎';
-  }
+  if(doubaoKey){el.textContent='✅ 已配置豆包大模型';}
+  else{el.textContent='未配置（默认使用本地 AI）';}
+}
+
+function toggleAdvance(){
+  const panel=document.getElementById('advancePanel');
+  const arrow=document.getElementById('advanceArrow');
+  if(panel.style.display==='none'){panel.style.display='block';arrow.style.transform='rotate(90deg)';}
+  else{panel.style.display='none';arrow.style.transform='';}
+}
 }
 
 async function callDoubao(question){
