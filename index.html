@@ -1072,11 +1072,11 @@ function tick(){const n=new Date();updateGreeting();}
 let aiHistory=[];
 
 // ===== FAB 拖拽 =====
-let fabDrag=false,fabSX=0,fabSY=0,fabOX=0,fabOY=0;
+let fabDrag=false,fabMoved=false,fabSX=0,fabSY=0,fabOX=0,fabOY=0;
 function initFabDrag(){
   const fab=document.getElementById('aiFab');
   const saved=localStorage.getItem('zb2_fab_pos');
-  if(saved){const[pos,side]=saved.split(',');fab.style.bottom=pos;fab.style.right=side;}
+  if(saved){const[p,s]=saved.split(',');fab.style.bottom=p;fab.style.right=s;}
   fab.addEventListener('touchstart',fabStart,{passive:false});
   fab.addEventListener('touchmove',fabMove,{passive:false});
   fab.addEventListener('touchend',fabEnd);
@@ -1087,10 +1087,10 @@ function initFabDrag(){
 function fabStart(e){
   if(e.type==='mousedown'&&e.button!==0)return;
   const fab=document.getElementById('aiFab');
-  fabDrag=true;fab.classList.add('dragging');
+  fabDrag=true;fabMoved=false;fab.classList.add('dragging');
   const p=e.touches?e.touches[0]:e;
   fabSX=p.clientX;fabSY=p.clientY;
-  fabOX=parseFloat(fab.style.right)||14;
+  fabOX=parseFloat(fab.style.right)||parseFloat(getComputedStyle(fab).right)||14;
   fabOY=parseFloat(fab.style.bottom)||parseFloat(getComputedStyle(fab).bottom)||80;
   e.preventDefault();
 }
@@ -1098,9 +1098,11 @@ function fabMove(e){
   if(!fabDrag)return;
   const fab=document.getElementById('aiFab');
   const p=e.touches?e.touches[0]:e;
-  const dx=fabSX-p.clientX,dy=fabSY-p.clientY;
-  const newR=Math.max(4,Math.min(window.innerWidth-56,fabOX+dx));
-  const newB=Math.max(4,Math.min(window.innerHeight-56,fabOY-dy));
+  const dx=p.clientX-fabSX,dy=p.clientY-fabSY;
+  if(Math.abs(dx)<4&&Math.abs(dy)<4)return;
+  fabMoved=true;
+  const newR=Math.max(0,Math.min(window.innerWidth-54,fabOX-dx));
+  const newB=Math.max(0,Math.min(window.innerHeight-54,fabOY-dy));
   fab.style.right=newR+'px';
   fab.style.bottom=newB+'px';
 }
@@ -1108,13 +1110,14 @@ function fabEnd(){
   if(!fabDrag)return;
   const fab=document.getElementById('aiFab');
   fabDrag=false;fab.classList.remove('dragging');
-  // snap to edge
-  const r=parseFloat(fab.style.right)||14;
-  const snapped=window.innerWidth/2>r+25?Math.max(4,r):4;
-  fab.style.right=snapped+'px';
-  fab.style.transition='right 0.2s, bottom 0.2s';
-  setTimeout(()=>fab.style.transition='box-shadow 0.2s',200);
-  localStorage.setItem('zb2_fab_pos',[fab.style.bottom,fab.style.right].join(','));
+  if(fabMoved){
+    const r=parseFloat(fab.style.right)||14;
+    const snapped=window.innerWidth/2>r+25?Math.max(4,r):4;
+    fab.style.right=snapped+'px';
+    fab.style.transition='right 0.2s, bottom 0.2s';
+    setTimeout(()=>fab.style.transition='box-shadow 0.2s',200);
+    localStorage.setItem('zb2_fab_pos',[fab.style.bottom,fab.style.right].join(','));
+  }
 }
 
 function openAI(){
