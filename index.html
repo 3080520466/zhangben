@@ -294,20 +294,22 @@
 
   /* ---- AI 助手 FAB ---- */
   .ai-fab {
-    position: fixed; bottom: calc(var(--nav-h) + var(--safe-b) + 14px);
-    right: calc(50% - 240px + 14px); z-index: 45;
+    position: fixed; z-index: 45;
     width: 50px; height: 50px; border-radius: 50%;
     background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff; border: none; font-size: 24px; cursor: pointer;
+    color: #fff; border: none; font-size: 24px; cursor: grab;
     box-shadow: 0 4px 20px rgba(102,126,234,0.45);
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.25s; animation: fabBounce 2s infinite;
+    transition: box-shadow 0.2s; animation: fabBounce 2s infinite;
+    right: 14px; bottom: calc(var(--nav-h) + var(--safe-b) + 14px);
   }
+  .ai-fab.dragging { cursor: grabbing; animation: none; box-shadow: 0 8px 30px rgba(102,126,234,0.6); }
   @keyframes fabBounce {
     0%,100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
   }
   .ai-fab:active { transform: scale(0.9); }
+  .ai-fab.dragging:active { transform: scale(1); }
   .ai-fab .badge {
     position: absolute; top: -4px; right: -4px;
     width: 18px; height: 18px; border-radius: 50%;
@@ -1068,6 +1070,52 @@ function tick(){const n=new Date();updateGreeting();}
 // ===== AI 助手 =====
 let aiHistory=[];
 
+// ===== FAB 拖拽 =====
+let fabDrag=false,fabSX=0,fabSY=0,fabOX=0,fabOY=0;
+function initFabDrag(){
+  const fab=document.getElementById('aiFab');
+  const saved=localStorage.getItem('zb2_fab_pos');
+  if(saved){const[pos,side]=saved.split(',');fab.style.bottom=pos;fab.style.right=side;}
+  fab.addEventListener('touchstart',fabStart,{passive:false});
+  fab.addEventListener('touchmove',fabMove,{passive:false});
+  fab.addEventListener('touchend',fabEnd);
+  fab.addEventListener('mousedown',fabStart);
+  document.addEventListener('mousemove',fabMove);
+  document.addEventListener('mouseup',fabEnd);
+}
+function fabStart(e){
+  if(e.type==='mousedown'&&e.button!==0)return;
+  const fab=document.getElementById('aiFab');
+  fabDrag=true;fab.classList.add('dragging');
+  const p=e.touches?e.touches[0]:e;
+  fabSX=p.clientX;fabSY=p.clientY;
+  fabOX=parseFloat(fab.style.right)||14;
+  fabOY=parseFloat(fab.style.bottom)||parseFloat(getComputedStyle(fab).bottom)||80;
+  e.preventDefault();
+}
+function fabMove(e){
+  if(!fabDrag)return;
+  const fab=document.getElementById('aiFab');
+  const p=e.touches?e.touches[0]:e;
+  const dx=fabSX-p.clientX,dy=fabSY-p.clientY;
+  const newR=Math.max(4,Math.min(window.innerWidth-56,fabOX+dx));
+  const newB=Math.max(4,Math.min(window.innerHeight-56,fabOY-dy));
+  fab.style.right=newR+'px';
+  fab.style.bottom=newB+'px';
+}
+function fabEnd(){
+  if(!fabDrag)return;
+  const fab=document.getElementById('aiFab');
+  fabDrag=false;fab.classList.remove('dragging');
+  // snap to edge
+  const r=parseFloat(fab.style.right)||14;
+  const snapped=window.innerWidth/2>r+25?Math.max(4,r):4;
+  fab.style.right=snapped+'px';
+  fab.style.transition='right 0.2s, bottom 0.2s';
+  setTimeout(()=>fab.style.transition='box-shadow 0.2s',200);
+  localStorage.setItem('zb2_fab_pos',[fab.style.bottom,fab.style.right].join(','));
+}
+
 function openAI(){
   document.getElementById('aiPanel').classList.add('show');
   document.getElementById('aiFab').style.display='none';
@@ -1275,7 +1323,7 @@ function nlu(q){
 // ===== 初始化 =====
 function init(){
   document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
-  initDark();loadDoubao();tick();setInterval(tick,3600000);
+  initDark();loadDoubao();initFabDrag();tick();setInterval(tick,3600000);
   load();setType('expense');updateCatSelect();refresh();checkStreak();
   document.addEventListener('click',function(e){if(!e.target.closest('.rec-item')){document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));}});
   window.addEventListener('resize',()=>{if(document.getElementById('tabStats').classList.contains('active'))renderTrend();});
