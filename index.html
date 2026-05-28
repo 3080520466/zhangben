@@ -1001,12 +1001,11 @@ function initFabDrag(){
 function fabStart(e){
   if(e.type==='mousedown'&&e.button!==0)return;
   const fab=document.getElementById('aiFab');
-  fabDrag=true;fabMoved=false;fab.classList.add('dragging');
+  fabDrag=true;fabMoved=false;
   const p=e.touches?e.touches[0]:e;
   fabSX=p.clientX;fabSY=p.clientY;
   fabOX=parseFloat(fab.style.right)||parseFloat(getComputedStyle(fab).right)||14;
   fabOY=parseFloat(fab.style.bottom)||parseFloat(getComputedStyle(fab).bottom)||80;
-  e.preventDefault();
 }
 function fabMove(e){
   if(!fabDrag)return;
@@ -1014,7 +1013,7 @@ function fabMove(e){
   const p=e.touches?e.touches[0]:e;
   const dx=p.clientX-fabSX,dy=p.clientY-fabSY;
   if(Math.abs(dx)<4&&Math.abs(dy)<4)return;
-  fabMoved=true;
+  if(!fabMoved){fabMoved=true;fab.classList.add('dragging');e.preventDefault();}
   const newR=Math.max(0,Math.min(window.innerWidth-54,fabOX-dx));
   const newB=Math.max(0,Math.min(window.innerHeight-54,fabOY-dy));
   fab.style.right=newR+'px';
@@ -1272,7 +1271,7 @@ function init(){
   load();setType('expense');updateCatSelect();refresh();checkStreak();
   document.addEventListener('click',function(e){if(!e.target.closest('.rec-item')){document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));}});
   window.addEventListener('resize',()=>{if(document.getElementById('tabStats').classList.contains('active'))renderTrend();});
-  if('serviceWorker' in navigator){const swCode=`const CACHE='zb-v5';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{if(resp.ok){const cl=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));}return resp;})))});`;const blob=new Blob([swCode],{type:'application/javascript'});navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});}
+  if('serviceWorker' in navigator){const swCode=`const CACHE='zb-v8';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{if(resp.ok){const cl=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));}return resp;})))});`;const blob=new Blob([swCode],{type:'application/javascript'});navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});}
 }
 init();
 </script>
