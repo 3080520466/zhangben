@@ -584,7 +584,8 @@
   <div class="ai-msgs" id="aiMsgs"></div>
   <div class="ai-suggestions" id="aiSuggestions"></div>
   <div class="ai-input-row">
-    <input id="aiInput" type="text" placeholder="问我任何问题..." onkeydown="if(event.key==='Enter')sendAI()">
+    <button id="aiVoiceBtn" onclick="toggleAIVoice()" style="width:42px;height:42px;border-radius:50%;border:none;background:var(--card2);font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🎤</button>
+    <input id="aiInput" type="text" placeholder="打字或按🎤说话..." onkeydown="if(event.key==='Enter')sendAI()">
     <button onclick="sendAI()">➤</button>
   </div>
 </div>
@@ -1142,18 +1143,57 @@ function renderSuggestions(){
   ].map(s=>`<button onclick="sendAI('${s}')">${s}</button>`).join('');
 }
 
-function addAIMsg(role,text){
+function addAIMsg(role,text,autoSpeak){
   aiHistory.push({role,text,time:Date.now()});
   const container=document.getElementById('aiMsgs');
   const div=document.createElement('div');
   div.className='ai-msg '+role;
   const avatar=role==='assistant'?'🤖':'😊';
-  div.innerHTML=`<div class="ai-avatar">${avatar}</div><div><div class="ai-bubble">${text.replace(/\n/g,'<br>')}</div></div>`;
+  const speakBtn=role==='assistant'?`<button onclick="speakText('${text.replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' ')}')" style="background:none;border:none;font-size:14px;cursor:pointer;margin-top:2px;opacity:0.5;" title="播放语音">🔊</button>`:'';
+  div.innerHTML=`<div class="ai-avatar">${avatar}</div><div><div class="ai-bubble">${text.replace(/\n/g,'<br>')}</div>${speakBtn}</div>`;
   container.appendChild(div);
   container.scrollTop=container.scrollHeight;
+  if(autoSpeak&&role==='assistant')speakText(text);
 }
 
-async function sendAI(preset){
+// ===== 语音合成 (TTS) =====
+function speakText(text){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/\n/g,'，').replace(/[#*_~`]/g,''));
+  u.lang='zh-CN';u.rate=1.1;u.pitch=1;
+  // 选中文语音
+  const voices=speechSynthesis.getVoices();
+  const zh=voices.find(v=>v.lang.startsWith('zh'))||voices.find(v=>v.lang==='zh-CN');
+  if(zh)u.voice=zh;
+  speechSynthesis.speak(u);
+}
+
+// ===== AI 语音输入 =====
+let aiListening=false,aiRecognition=null;
+function toggleAIVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    toast('您的浏览器不支持语音输入');return;
+  }
+  if(aiListening){stopAIVoice();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  aiRecognition=new SR();
+  aiRecognition.lang='zh-CN';aiRecognition.interimResults=false;
+  const btn=document.getElementById('aiVoiceBtn');
+  aiRecognition.onstart=()=>{aiListening=true;btn.textContent='🔴';btn.style.background='var(--red-bg)';};
+  aiRecognition.onend=()=>{aiListening=false;btn.textContent='🎤';btn.style.background='';};
+  aiRecognition.onerror=()=>{aiListening=false;btn.textContent='🎤';btn.style.background='';};
+  aiRecognition.onresult=(e)=>{
+    const said=e.results[0][0].transcript;
+    document.getElementById('aiInput').value=said;
+    stopAIVoice();
+    sendAI(null,true);
+  };
+  aiRecognition.start();
+}
+function stopAIVoice(){if(aiRecognition){try{aiRecognition.stop();}catch(e){}}aiListening=false;const btn=document.getElementById('aiVoiceBtn');btn.textContent='🎤';btn.style.background='';}
+
+async function sendAI(preset,autoSpeak){
   const input=document.getElementById('aiInput');
   const text=(preset||input.value).trim();
   if(!text)return;
@@ -1161,7 +1201,6 @@ async function sendAI(preset){
   addAIMsg('user',text);
 
   if(doubaoKey){
-    // 使用豆包大模型
     const typingEl=document.createElement('div');typingEl.className='ai-msg assistant';typingEl.id='aiTyping';
     typingEl.innerHTML='<div class="ai-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);">🤖</div><div><div class="ai-bubble" style="color:var(--text2);">思考中...</div></div>';
     document.getElementById('aiMsgs').appendChild(typingEl);
@@ -1169,16 +1208,15 @@ async function sendAI(preset){
     try{
       const reply=await callDoubao(text);
       const t=document.getElementById('aiTyping');if(t)t.remove();
-      addAIMsg('assistant',reply);
+      addAIMsg('assistant',reply,autoSpeak);
     }catch(e){
       const t=document.getElementById('aiTyping');if(t)t.remove();
       addAIMsg('assistant','😅 豆包调用失败，切换到本地引擎...');
       setTimeout(()=>addAIMsg('assistant',nlu(text)),300);
     }
   }else{
-    // 本地引擎
     const reply=nlu(text);
-    setTimeout(()=>addAIMsg('assistant',reply),400+Math.random()*600);
+    setTimeout(()=>addAIMsg('assistant',reply,autoSpeak),400+Math.random()*600);
   }
   renderSuggestions();
 }
