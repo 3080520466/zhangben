@@ -504,6 +504,10 @@
       </div>
     </div>
     <div class="set-card">
+      <div class="stitle">🎤 AI 语音</div>
+      <div id="voiceList" style="max-height:220px;overflow-y:auto;"></div>
+    </div>
+    <div class="set-card">
       <div class="stitle"><span>分类管理</span><span class="sadd" onclick="addCategory()">+</span></div>
       <div id="catList"></div>
     </div>
@@ -1073,13 +1077,48 @@ function addAIMsg(role,text,autoSpeak){
 }
 
 // ===== 语音合成 (TTS) =====
-let cachedVoices=[];
+let cachedVoices=[],selectedVoiceURI='';
 
 function preloadVoices(){
-  if('speechSynthesis' in window){
+  if(!('speechSynthesis' in window))return;
+  cachedVoices=speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged=()=>{
     cachedVoices=speechSynthesis.getVoices();
-    speechSynthesis.onvoiceschanged=()=>{cachedVoices=speechSynthesis.getVoices();};
+    renderVoiceList();
+  };
+  selectedVoiceURI=localStorage.getItem('zb2_voice')||'';
+}
+
+function renderVoiceList(){
+  const el=document.getElementById('voiceList');
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  if(!zh.length){
+    el.innerHTML='<div class="set-row" style="color:var(--text2);cursor:default;">未找到中文语音</div>';
+    return;
   }
+  el.innerHTML=zh.map(v=>{
+    const sel=v.voiceURI===selectedVoiceURI;
+    return `<div class="set-row" onclick="selectVoice('${v.voiceURI.replace(/'/g,'')}')" style="${sel?'background:var(--pri-light);':''}">
+      <span>${sel?'✅ ':''}${v.name} <span style="font-size:11px;color:var(--text2);">${v.lang}</span></span>
+      <button onclick="event.stopPropagation();previewVoice('${v.voiceURI.replace(/'/g,'')}')" style="background:none;border:none;font-size:16px;cursor:pointer;padding:4px 8px;">🔊</button>
+    </div>`;
+  }).join('');
+}
+
+function selectVoice(uri){
+  selectedVoiceURI=uri;
+  localStorage.setItem('zb2_voice',uri);
+  renderVoiceList();
+  toast('已切换语音 ✓');
+}
+
+function previewVoice(uri){
+  const v=cachedVoices.find(v=>v.voiceURI===uri);
+  if(!v)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance('你好，我是你的记账小助手');
+  u.voice=v;u.rate=0.9;u.volume=1;
+  speechSynthesis.speak(u);
 }
 
 function speakText(text){
@@ -1088,17 +1127,19 @@ function speakText(text){
   const clean=text.replace(/\n/g,'，').replace(/[^一-鿿\w\s，。！？、：；（）「」【】¥%+-]/g,'').trim();
   if(!clean)return;
   const u=new SpeechSynthesisUtterance(clean);
-  u.lang='zh-CN';u.rate=0.9;u.pitch=1.15;u.volume=1;
+  u.lang='zh-CN';u.rate=0.9;u.pitch=1.1;u.volume=1;
 
-  // 尝试找中文女声：按优先级匹配
-  const femaleKeywords=['Ting-Ting','Tingting','Huihui','Mei-Jia','Meijia','Xiaoxiao','Sin-Ji','Ya-Ling','Hanhan','Li-Mu'];
-  const zhVoices=cachedVoices.filter(v=>v.lang.includes('zh'));
-  let pick=null;
-  for(const kw of femaleKeywords){
-    pick=zhVoices.find(v=>v.name.includes(kw));
-    if(pick)break;
+  // 用已保存的语音
+  if(selectedVoiceURI){
+    const saved=cachedVoices.find(v=>v.voiceURI===selectedVoiceURI);
+    if(saved){u.voice=saved;speechSynthesis.speak(u);return;}
   }
-  if(!pick)pick=zhVoices.find(v=>v.name.toLowerCase().includes('female'))||zhVoices[0];
+  // 自动找中文女声
+  const kw=['Ting-Ting','Tingting','Huihui','Mei-Jia','Meijia','Xiaoxiao','Sin-Ji'];
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  let pick=null;
+  for(const k of kw){pick=zh.find(v=>v.name.includes(k));if(pick)break;}
+  if(!pick)pick=zh[0];
   if(pick)u.voice=pick;
   speechSynthesis.speak(u);
 }
