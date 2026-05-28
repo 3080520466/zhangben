@@ -711,17 +711,16 @@ ${budgetRemain!==null?'预算：¥'+budget.toFixed(0)+' / 剩余：¥'+budgetRem
 
 用户问题：${question}`;
 
-  const resp=await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions',{
+  const resp=await fetch('https://zhangben-seven.vercel.app/api/chat',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+doubaoKey},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
+      key:doubaoKey,
       model:doubaoModel,
       messages:[
         {role:'system',content:'你是一个专业的记账助手，叫小账。用温暖鼓励的语气，回答简洁有力（2-4句话）。可以适当使用emoji。'},
         {role:'user',content:context}
-      ],
-      max_tokens:300,
-      temperature:0.7
+      ]
     })
   });
   if(!resp.ok){
