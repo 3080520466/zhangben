@@ -992,9 +992,9 @@ function initFabDrag(){
   const saved=localStorage.getItem('zb2_fab_pos');
   if(saved){const[p,s]=saved.split(',');fab.style.bottom=p;fab.style.right=s;}
   fab.addEventListener('touchstart',fabStart,{passive:false});
-  fab.addEventListener('touchmove',fabMove,{passive:false});
-  fab.addEventListener('touchend',fabEnd);
   fab.addEventListener('mousedown',fabStart);
+  document.addEventListener('touchmove',fabMove,{passive:false});
+  document.addEventListener('touchend',fabEnd);
   document.addEventListener('mousemove',fabMove);
   document.addEventListener('mouseup',fabEnd);
 }
@@ -1077,12 +1077,19 @@ function addAIMsg(role,text,autoSpeak){
 function speakText(text){
   if(!('speechSynthesis' in window))return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text.replace(/\n/g,'，').replace(/[#*_~`]/g,''));
-  u.lang='zh-CN';u.rate=1.1;u.pitch=1;
-  // 选中文语音
-  const voices=speechSynthesis.getVoices();
-  const zh=voices.find(v=>v.lang.startsWith('zh'))||voices.find(v=>v.lang==='zh-CN');
-  if(zh)u.voice=zh;
+  // 去掉emoji和特殊符号
+  // 过滤表情和符号，只保留中文、字母、数字、常用标点
+  const clean=text.replace(/\n/g,'，').replace(/[^一-鿿\w\s，。！？、：；（）「」【】¥%+-]/g,'').trim();
+  if(!clean)return;
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='zh-CN';u.rate=0.95;u.pitch=1.1;
+  // 优先选温柔女声
+  let voices=speechSynthesis.getVoices();
+  if(!voices.length){voices=speechSynthesis.getVoices();}
+  const female=voices.find(v=>v.lang.includes('zh')&&(v.name.includes('Tingting')||v.name.includes('Xiaoxiao')||v.name.includes('Meijia')));
+  const zh=voices.find(v=>v.lang.includes('zh'));
+  if(female)u.voice=female;
+  else if(zh)u.voice=zh;
   speechSynthesis.speak(u);
 }
 
