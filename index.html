@@ -1073,22 +1073,33 @@ function addAIMsg(role,text,autoSpeak){
 }
 
 // ===== 语音合成 (TTS) =====
+let cachedVoices=[];
+
+function preloadVoices(){
+  if('speechSynthesis' in window){
+    cachedVoices=speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged=()=>{cachedVoices=speechSynthesis.getVoices();};
+  }
+}
+
 function speakText(text){
   if(!('speechSynthesis' in window))return;
   speechSynthesis.cancel();
-  // 去掉emoji和特殊符号
-  // 过滤表情和符号，只保留中文、字母、数字、常用标点
   const clean=text.replace(/\n/g,'，').replace(/[^一-鿿\w\s，。！？、：；（）「」【】¥%+-]/g,'').trim();
   if(!clean)return;
   const u=new SpeechSynthesisUtterance(clean);
-  u.lang='zh-CN';u.rate=0.95;u.pitch=1.1;
-  // 优先选温柔女声
-  let voices=speechSynthesis.getVoices();
-  if(!voices.length){voices=speechSynthesis.getVoices();}
-  const female=voices.find(v=>v.lang.includes('zh')&&(v.name.includes('Tingting')||v.name.includes('Xiaoxiao')||v.name.includes('Meijia')));
-  const zh=voices.find(v=>v.lang.includes('zh'));
-  if(female)u.voice=female;
-  else if(zh)u.voice=zh;
+  u.lang='zh-CN';u.rate=0.9;u.pitch=1.15;u.volume=1;
+
+  // 尝试找中文女声：按优先级匹配
+  const femaleKeywords=['Ting-Ting','Tingting','Huihui','Mei-Jia','Meijia','Xiaoxiao','Sin-Ji','Ya-Ling','Hanhan','Li-Mu'];
+  const zhVoices=cachedVoices.filter(v=>v.lang.includes('zh'));
+  let pick=null;
+  for(const kw of femaleKeywords){
+    pick=zhVoices.find(v=>v.name.includes(kw));
+    if(pick)break;
+  }
+  if(!pick)pick=zhVoices.find(v=>v.name.toLowerCase().includes('female'))||zhVoices[0];
+  if(pick)u.voice=pick;
   speechSynthesis.speak(u);
 }
 
@@ -1267,7 +1278,7 @@ function nlu(q){
 // ===== 初始化 =====
 function init(){
   document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
-  initDark();initFabDrag();tick();setInterval(tick,3600000);
+  initDark();initFabDrag();preloadVoices();tick();setInterval(tick,3600000);
   load();setType('expense');updateCatSelect();refresh();checkStreak();
   document.addEventListener('click',function(e){if(!e.target.closest('.rec-item')){document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));}});
   window.addEventListener('resize',()=>{if(document.getElementById('tabStats').classList.contains('active'))renderTrend();});
