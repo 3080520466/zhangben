@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="我的账本">
+<meta name="theme-color" content="#F5F6F8">
+<title>我的账本</title>
+<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuaIkeeahOi0puacrCIsCiAgInNob3J0X25hbWUiOiAi6LSn5pysIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNGNUY2RjgiLAogICJ0aGVtZV9jb2xvciI6ICIjRjVGNkY4IiwKICAiaWNvbnMiOiBbewogICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48dGV4dCB5PSc3NScgZm9udC1zaXplPSc3NSc+8J+kkjwvdGV4dD48L3N2Zz4iLAogICAgInNpemVzIjogIjE5MngxOTIiLAogICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICB9XQp9">
+<style>
+  /* ===== 亮色主题 (默认) ===== */
+  :root {
+    --pri: #5B6AF0; --pri-light: #F0F2FF;
+    --green: #34C759; --green-bg: #F0FDF4;
+    --red: #FF3B30; --red-bg: #FFF5F5;
+    --orange: #FF9500; --orange-bg: #FFF8F0;
+    --bg: #F2F3F6; --card: #FFFFFF; --card2: #F9FAFB;
+    --text: #1A1C21; --text2: #8B8F9A; --text3: #B0B4C0;
+    --border: #EBECF0; --border2: #F4F5F7;
+    --shadow: 0 1px 3px rgba(0,0,0,0.03), 0 3px 10px rgba(0,0,0,0.04);
+    --radius: 16px; --radius-sm: 12px;
+    --nav-h: 60px; --safe-b: env(safe-area-inset-bottom, 16px);
+  }
+  /* ===== 暗色主题 ===== */
+  [data-theme="dark"] {
+    --pri: #7B8AF7; --pri-light: #1F2340;
+    --green: #34C759; --green-bg: #0F2D1A;
+    --red: #FF453A; --red-bg: #2D1518;
+    --orange: #FF9F0A; --orange-bg: #2D2010;
+    --bg: #0F1117; --card: #1A1D25; --card2: #22252E;
+    --text: #E8EAED; --text2: #8B8F9A; --text3: #5C606A;
+    --border: #2A2D35; --border2: #22252E;
+    --shadow: 0 1px 3px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.25);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; min-height: -webkit-fill-available;
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+    padding-bottom: calc(var(--nav-h) + var(--safe-b) + 8px);
+    user-select: none; -webkit-user-select: none;
+    transition: background 0.3s, color 0.3s;
+  }
+  .app { max-width: 480px; margin: 0 auto; padding: 0 14px; }
+
+  /* ---- 头部 ---- */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 2px 6px; }
+  .topbar .greet { font-size: 14px; color: var(--text2); }
+  .topbar .greet b { color: var(--pri); font-weight: 700; }
+  .topbar .streak-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600; color: var(--orange);
+    background: var(--orange-bg); padding: 4px 10px; border-radius: 12px;
+  }
+  .streak-badge .flame { font-size: 14px; }
+
+  /* ---- 月份 ---- */
+  .month-row { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 8px 0 12px; }
+  .month-row .mbtn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1.5px solid var(--border); background: var(--card);
+    font-size: 12px; cursor: pointer; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .month-row .mbtn:active { background: var(--pri-light); border-color: var(--pri); }
+  .month-row .mlabel { font-size: 17px; font-weight: 600; min-width: 96px; text-align: center; }
+
+  /* ---- 汇总卡片 ---- */
+  .summary-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .sum-item {
+    flex: 1; background: var(--card); border-radius: var(--radius);
+    padding: 15px 10px 13px; text-align: center; box-shadow: var(--shadow);
+    transition: background 0.3s;
+  }
+  .sum-item .slabel { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .sum-item .sval { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+  .sum-item.inc .sval { color: var(--green); }
+  .sum-item.exp .sval { color: var(--red); }
+  .sum-item.bal .sval { color: var(--pri); }
+
+  /* ---- 预算 ---- */
+  .budget-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 12px 16px; margin-bottom: 10px; box-shadow: var(--shadow);
+  }
+  .budget-card .bhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .budget-card .btitle { font-size: 13px; font-weight: 600; }
+  .budget-card .bctrl { display: flex; gap: 6px; align-items: center; }
+  .budget-card .bctrl input {
+    width: 60px; padding: 4px 6px; border-radius: 6px; border: 1.5px solid var(--border);
+    font-size: 12px; text-align: center; font-family: inherit; outline: none;
+    background: var(--card2); color: var(--text);
+  }
+  .budget-card .bctrl input:focus { border-color: var(--pri); }
+  .budget-card .bctrl .bset {
+    padding: 4px 10px; border-radius: 6px; border: none;
+    background: var(--pri); color: #fff; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btrack { width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+  .bfill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .bnote { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); }
+
+  /* ---- Tab ---- */
+  .tab-content { display: none; animation: ft 0.2s; }
+  .tab-content.active { display: block; }
+  @keyframes ft { from { opacity:0.7; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ---- 表单 ---- */
+  .form-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .type-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+  .type-toggle button {
+    flex: 1; padding: 10px; border-radius: var(--radius-sm);
+    border: 2px solid var(--border); background: var(--card);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--text);
+    transition: all 0.15s;
+  }
+  .type-toggle button.eact { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+  .type-toggle button.iact { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+
+  .fr { display: flex; gap: 8px; margin-bottom: 8px; }
+  .fr input, .fr select {
+    padding: 10px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+    font-size: 15px; outline: none; font-family: inherit;
+    background: var(--card2); color: var(--text);
+    transition: border-color 0.15s; -webkit-appearance: none;
+  }
+  .fr input:focus, .fr select:focus { border-color: var(--pri); background: var(--card); }
+  .fr .amt-wrap { flex: 1; position: relative; }
+  .fr .amt { font-size: 28px; font-weight: 700; text-align: center; letter-spacing: -0.5px; width: 100%; }
+  .fr .voice-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: var(--pri-light); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fr .voice-btn.listening { background: var(--red-bg); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+  .fr .fcat, .fr .fdate, .fr .fnote { flex: 1; min-width: 0; }
+
+  .add-btn {
+    width: 100%; padding: 13px; border-radius: var(--radius-sm); border: none;
+    font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+    color: #fff; transition: all 0.15s;
+  }
+  .add-btn:active { transform: scale(0.97); }
+
+  /* ---- 快速模板 ---- */
+  .tpl-section { margin-bottom: 4px; }
+  .tpl-section .tlabel { font-size: 12px; color: var(--text2); margin-bottom: 8px; padding-left: 2px; }
+  .tpl-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tpl-chip {
+    padding: 7px 13px; border-radius: 18px; border: 1.5px solid var(--border);
+    background: var(--card); font-size: 12px; cursor: pointer;
+    transition: all 0.15s; font-family: inherit; color: var(--text); white-space: nowrap;
+  }
+  .tpl-chip:active { transform: scale(0.96); }
+  .tpl-chip.e { border-color: #FFD5D0; }
+  .tpl-chip.e:active { background: var(--red-bg); }
+  .tpl-chip.i { border-color: #C2EFCC; }
+  .tpl-chip.i:active { background: var(--green-bg); }
+
+  /* ---- 明细 ---- */
+  .list-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
+  .list-card .lhead { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+  .list-card .lhead .lt { font-size: 15px; font-weight: 600; }
+  .list-card .lhead .lc { font-size: 12px; color: var(--text2); }
+  .list-card .search { margin: 10px 14px; padding: 10px 14px; width: calc(100% - 28px); border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; outline: none; font-family: inherit; background: var(--card2); color: var(--text); }
+  .list-card .search:focus { border-color: var(--pri); }
+
+  .day-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; background: var(--card2); border-bottom: 1px solid var(--border2); position: sticky; top: 0; z-index: 2; }
+  .day-header .dlabel { font-size: 13px; font-weight: 600; color: var(--text); }
+  .day-header .dsum { font-size: 11px; color: var(--text2); }
+  .day-header .dsum span.ex { color: var(--red); font-weight: 500; }
+  .day-header .dsum span.in { color: var(--green); font-weight: 500; }
+
+  .rec-row { position: relative; overflow: hidden; }
+  .rec-item { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border2); background: var(--card); transition: transform 0.2s, background 0.1s; position: relative; z-index: 1; }
+  .rec-item.swiped { transform: translateX(-130px); }
+  .rec-item:active { background: var(--card2); }
+  .rec-row:last-child .rec-item { border-bottom: none; }
+  .rec-actions { position: absolute; right: 0; top: 0; bottom: 0; display: flex; z-index: 0; }
+  .rec-actions button { width: 65px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; color: #fff; }
+  .rec-actions .act-edit { background: var(--pri); }
+  .rec-actions .act-del { background: var(--red); border-radius: 0 10px 10px 0; }
+
+  .ricon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; margin-right: 10px; }
+  .ricon.e { background: var(--red-bg); }
+  .ricon.i { background: var(--green-bg); }
+  .rinfo { flex: 1; min-width: 0; }
+  .rinfo .cat { font-size: 14px; font-weight: 500; }
+  .rinfo .note { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .ramt { font-size: 16px; font-weight: 600; margin-right: 6px; flex-shrink: 0; }
+  .ramt.e { color: var(--red); }
+  .ramt.i { color: var(--green); }
+  .rdot { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; color: var(--text3); font-size: 16px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+
+  .empty { text-align: center; padding: 48px 16px; color: var(--text2); }
+  .empty .eicon { font-size: 40px; margin-bottom: 8px; opacity: 0.6; }
+
+  /* ---- 统计 ---- */
+  .stat-card { background: var(--card); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .stat-card .stitle { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+  .stat-card .stitle .sticon { font-size: 16px; }
+  .stat-card canvas { display: block; margin: 0 auto; }
+
+  .trend-chart-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .stat-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; justify-content: center; font-size: 12px; color: var(--text2); }
+  .stat-legend span { display: flex; align-items: center; gap: 4px; }
+  .stat-legend .dot { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+
+  .stat-compare { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .stat-compare .sct { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .stat-compare .scr { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 14px; }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 5px; font-weight: 600; }
+  .tag.up { background: var(--red-bg); color: var(--red); }
+  .tag.down { background: var(--green-bg); color: var(--green); }
+  .tag.flat { background: var(--card2); color: var(--text3); }
+
+  /* 排行 */
+  .rank-list { }
+  .rank-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid var(--border2);
+  }
+  .rank-item:last-child { border-bottom: none; }
+  .rank-num { width: 22px; height: 22px; border-radius: 50%; background: var(--card2); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rank-item:nth-child(1) .rank-num { background: #FFD700; color: #fff; }
+  .rank-item:nth-child(2) .rank-num { background: #C0C0C0; color: #fff; }
+  .rank-item:nth-child(3) .rank-num { background: #CD7F32; color: #fff; }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-info .rcat { font-size: 14px; font-weight: 500; }
+  .rank-bar-wrap { width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .rank-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .rank-amt { font-size: 14px; font-weight: 600; flex-shrink: 0; }
+
+  /* ---- 设置 ---- */
+  .set-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
+  .set-card .stitle { padding: 14px 16px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .stitle .sadd { font-size: 20px; color: var(--pri); cursor: pointer; width: 28px; text-align: center; line-height: 1; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border2); font-size: 14px; cursor: pointer; transition: background 0.1s; }
+  .set-row:active { background: var(--card2); }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .sarr { color: var(--text3); }
+  .set-row .danger { color: var(--red); }
+  .cat-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border2); font-size: 14px; }
+  .cat-actions { display: flex; gap: 4px; }
+  .cat-actions button { background: none; border: none; font-size: 15px; cursor: pointer; padding: 4px 6px; border-radius: 4px; color: var(--text2); }
+
+  /* 暗色开关 */
+  .toggle-switch { position: relative; width: 48px; height: 28px; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-slider { position:absolute; cursor:pointer; top:0;left:0;right:0;bottom:0; background: #E0E0E0; border-radius:14px; transition:0.3s; }
+  .toggle-slider:before { content:""; position:absolute; height:22px; width:22px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+  input:checked+.toggle-slider { background: var(--pri); }
+  input:checked+.toggle-slider:before { transform:translateX(20px); }
+
+  /* ---- 弹窗 ---- */
+  .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.35); z-index:99; display:flex; align-items:flex-end; justify-content:center; animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .sheet { background: var(--card); border-radius: 18px 18px 0 0; padding: 20px 16px calc(20px + var(--safe-b)); width: 100%; max-width: 480px; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .sheet h3 { font-size: 16px; margin-bottom: 14px; text-align: center; }
+  .sheet .fr { display: flex; gap: 8px; margin-bottom: 8px; }
+  .sheet input, .sheet select { flex: 1; padding: 11px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); font-size: 15px; outline: none; font-family: inherit; background: var(--card2); color: var(--text); }
+  .sheet input:focus, .sheet select:focus { border-color: var(--pri); }
+  .sheet .emoji-pick { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .sheet .emoji-pick button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; background: var(--card2); font-size: 15px; cursor: pointer; }
+  .sheet .emoji-pick button.sel { border-color: var(--pri); background: var(--pri-light); }
+  .sheet-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .sheet-btns button { flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .sheet-btns .sbtn-pri { background: var(--pri); color: #fff; }
+  .sheet-btns .sbtn-ghost { background: var(--card2); color: var(--text2); }
+  .sheet-btns .sbtn-danger { background: var(--red-bg); color: var(--red); }
+
+  /* ---- Toast ---- */
+  .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); padding: 10px 22px; border-radius: 20px; background: rgba(26,28,33,0.92); color: #fff; font-size: 13px; font-weight: 500; z-index: 999; animation: toastIn 0.3s; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+  @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-6px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+  /* ---- 底部导航 ---- */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 50; padding-bottom: var(--safe-b); max-width: 480px; margin: 0 auto; }
+  .bottom-nav .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 7px 0 4px; cursor: pointer; gap: 2px; -webkit-tap-highlight-color: transparent; }
+  .bottom-nav .nav-item .ni { font-size: 20px; line-height: 1; transition: transform 0.15s; }
+  .bottom-nav .nav-item .nt { font-size: 10px; color: var(--text2); font-weight: 500; transition: color 0.15s; }
+  .bottom-nav .nav-item.active .nt { color: var(--pri); }
+  .bottom-nav .nav-item:active .ni { transform: scale(0.85); }
+
+  /* ---- 月报预览 ---- */
+  .report-preview { display: none; }
+
+  /* ---- AI 助手 FAB ---- */
+  .ai-fab {
+    position: fixed; z-index: 45;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border: none; font-size: 24px; cursor: grab;
+    box-shadow: 0 4px 20px rgba(102,126,234,0.45);
+    display: flex; align-items: center; justify-content: center;
+    transition: box-shadow 0.2s; animation: fabBounce 2s infinite;
+    right: 14px; bottom: calc(var(--nav-h) + var(--safe-b) + 14px);
+  }
+  .ai-fab.dragging { cursor: grabbing; animation: none; box-shadow: 0 8px 30px rgba(102,126,234,0.6); }
+  @keyframes fabBounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .ai-fab:active { transform: scale(0.9); }
+  .ai-fab.dragging:active { transform: scale(1); }
+  .ai-fab .badge {
+    position: absolute; top: -4px; right: -4px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ---- AI 聊天面板 ---- */
+  .ai-panel {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg); z-index: 100;
+    display: none; flex-direction: column;
+    animation: aiIn 0.3s ease;
+  }
+  @keyframes aiIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .ai-panel.show { display: flex; }
+
+  .ai-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; background: var(--card);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .ai-topbar .ai-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .ai-topbar .ai-close { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--card2); font-size: 16px; cursor: pointer; color: var(--text); }
+  .ai-topbar .ai-clear { font-size: 12px; color: var(--text2); background: none; border: none; cursor: pointer; font-family: inherit; margin-right: 8px; }
+
+  .ai-msgs {
+    flex: 1; overflow-y: auto; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .ai-msg { display: flex; gap: 8px; animation: msgSlide 0.3s; }
+  @keyframes msgSlide { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .ai-msg.user { flex-direction: row-reverse; }
+  .ai-msg .ai-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .ai-msg.assistant .ai-avatar { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .ai-msg.user .ai-avatar { background: var(--card2); }
+  .ai-msg .ai-bubble {
+    max-width: 78%; padding: 10px 14px; border-radius: 14px;
+    font-size: 14px; line-height: 1.6; word-break: break-word;
+  }
+  .ai-msg.assistant .ai-bubble { background: var(--card); border-bottom-left-radius: 4px; box-shadow: var(--shadow); }
+  .ai-msg.user .ai-bubble { background: var(--pri); color: #fff; border-bottom-right-radius: 4px; }
+  .ai-msg .ai-time { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .ai-suggestions { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px; }
+  .ai-suggestions button {
+    padding: 6px 14px; border-radius: 16px; border: 1.5px solid var(--border);
+    background: var(--card); font-size: 12px; cursor: pointer;
+    font-family: inherit; color: var(--text); white-space: nowrap;
+  }
+  .ai-suggestions button:active { background: var(--pri-light); border-color: var(--pri); }
+
+  .ai-input-row {
+    display: flex; gap: 8px; padding: 10px 16px calc(10px + var(--safe-b));
+    background: var(--card); border-top: 1px solid var(--border); flex-shrink: 0;
+  }
+  .ai-input-row input {
+    flex: 1; padding: 11px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-size: 15px; outline: none; font-family: inherit;
+    background: var(--card2); color: var(--text);
+  }
+  .ai-input-row input:focus { border-color: var(--pri); }
+  .ai-input-row button {
+    width: 42px; height: 42px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; font-size: 18px; cursor: pointer; flex-shrink: 0;
+  }
+
+  @media (min-width: 480px) { body { padding-top: 12px; } .bottom-nav { border-radius: 14px 14px 0 0; left: auto; right: auto; } .ai-fab { right: calc(50% - 240px + 14px); } }
+  @media (max-width: 360px) {
+    .summary-row { gap: 5px; } .sum-item { padding: 11px 6px 9px; } .sum-item .sval { font-size: 17px; }
+    .tpl-chips { gap: 4px; } .tpl-chip { padding: 5px 10px; font-size: 11px; }
+    .rec-item { padding: 11px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div>
+      <div class="greet" id="greeting">早上好 ☀️</div>
+      <h1 style="font-size:24px;font-weight:700;letter-spacing:-0.3px;">我的账本</h1>
+    </div>
+    <div class="streak-badge" id="streakBadge">
+      <span class="flame">🔥</span><span id="streakCount">0</span> 天
+    </div>
+  </div>
+
+  <div class="month-row">
+    <button class="mbtn" onclick="prevMonth()">◀</button>
+    <span class="mlabel" id="monthLabel"></span>
+    <button class="mbtn" onclick="nextMonth()">▶</button>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-item inc"><div class="slabel">收入</div><div class="sval" id="sInc">¥0</div></div>
+    <div class="sum-item exp"><div class="slabel">支出</div><div class="sval" id="sExp">¥0</div></div>
+    <div class="sum-item bal"><div class="slabel">结余</div><div class="sval" id="sBal">¥0</div></div>
+  </div>
+
+  <div class="budget-card">
+    <div class="bhead">
+      <span class="btitle">月度预算</span>
+      <div class="bctrl">
+        <input id="budgetInput" type="number" placeholder="金额" inputmode="numeric" onkeydown="if(event.key==='Enter')setBudget()">
+        <button class="bset" onclick="setBudget()">设置</button>
+      </div>
+    </div>
+    <div class="btrack"><div class="bfill" id="bfill" style="width:0%"></div></div>
+    <div class="bnote"><span id="bUsed">已用 ¥0</span><span id="bRemain">未设置预算</span></div>
+  </div>
+
+  <!-- Tab 1: 记账 -->
+  <div class="tab-content active" id="tabAdd">
+    <div class="form-card">
+      <div class="type-toggle">
+        <button class="eact" id="btnExp" onclick="setType('expense')">支出</button>
+        <button id="btnInc" onclick="setType('income')">收入</button>
+      </div>
+      <div class="fr">
+        <div class="amt-wrap">
+          <input class="amt" id="amt" type="number" placeholder="0.00" step="0.01" min="0.01" inputmode="decimal" onkeydown="if(event.key==='Enter')addRecord()">
+          <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" title="语音输入">🎙️</button>
+        </div>
+      </div>
+      <div class="fr">
+        <select class="fcat" id="fcat"></select>
+        <input class="fdate" id="fdate" type="date">
+      </div>
+      <div class="fr"><input class="fnote" id="fnote" type="text" placeholder="备注（选填）"></div>
+      <button class="add-btn" id="addBtn" onclick="addRecord()">记一笔</button>
+    </div>
+
+    <div class="tpl-section">
+      <div class="tlabel">快速记录</div>
+      <div class="tpl-chips">
+        <button class="tpl-chip e" onclick="quickAdd('expense','🍜 餐饮',25,'午餐')">🍱 午餐</button>
+        <button class="tpl-chip e" onclick="quickAdd('expense','🍜 餐饮',15,'早餐')">🥛 早餐</button>
+        <button class="tpl-chip e" onclick="quickAdd('expense','🍜 餐饮',35,'晚餐')">🍲 晚餐</button>
+        <button class="tpl-chip e" onclick="quickAdd('expense','🚌 交通',8,'通勤')">🚇 通勤</button>
+        <button class="tpl-chip e" onclick="quickAdd('expense','📱 通讯',50,'话费')">📱 话费</button>
+        <button class="tpl-chip e" onclick="quickAdd('expense','🛒 购物',50,'日用品')">🛍️ 购物</button>
+        <button class="tpl-chip i" onclick="quickAdd('income','💰 工资',8000,'月薪')">💵 工资</button>
+        <button class="tpl-chip i" onclick="quickAdd('income','🧧 红包',200,'零花')">🧧 红包</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: 明细 -->
+  <div class="tab-content" id="tabList">
+    <div class="list-card">
+      <div class="lhead"><span class="lt">收支明细</span><span class="lc" id="recCount">0 条</span></div>
+      <input class="search" id="search" type="text" placeholder="搜索..." oninput="renderRecords()">
+      <div id="recList"><div class="empty"><div class="eicon">📋</div><div>暂无记录</div></div></div>
+    </div>
+  </div>
+
+  <!-- Tab 3: 统计 -->
+  <div class="tab-content" id="tabStats">
+    <div class="stat-card">
+      <div class="stitle"><span class="sticon">📈</span> 消费趋势</div>
+      <div class="trend-chart-wrap"><canvas id="trendCanvas" height="200"></canvas></div>
+    </div>
+    <div class="stat-card">
+      <div class="stitle"><span class="sticon">🍩</span> 支出分类</div>
+      <canvas id="pieCanvas" width="280" height="280"></canvas>
+      <div class="stat-legend" id="pieLegend"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stitle"><span class="sticon">🏆</span> 消费排行</div>
+      <div class="rank-list" id="rankList"></div>
+    </div>
+    <div class="stat-compare">
+      <div class="sct">环比上月</div>
+      <div class="scr"><span>收入</span><span id="cmpInc">--</span></div>
+      <div class="scr"><span>支出</span><span id="cmpExp">--</span></div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 我的 -->
+  <div class="tab-content" id="tabMe">
+    <div class="set-card">
+      <div class="stitle">外观</div>
+      <div class="set-row">
+        <span>🌙 暗色模式</span>
+        <label class="toggle-switch"><input type="checkbox" id="darkToggle" onchange="toggleDark()"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div class="set-card">
+      <div class="stitle">🎤 AI 语音</div>
+      <div id="voiceList" style="max-height:220px;overflow-y:auto;"></div>
+    </div>
+    <div class="set-card">
+      <div class="stitle"><span>分类管理</span><span class="sadd" onclick="addCategory()">+</span></div>
+      <div id="catList"></div>
+    </div>
+    <div class="set-card">
+      <div class="stitle">数据</div>
+      <div class="set-row" onclick="exportCSV()"><span>导出 CSV</span><span class="sarr">›</span></div>
+      <div class="set-row" onclick="exportJSON()"><span>备份 JSON</span><span class="sarr">›</span></div>
+      <div class="set-row" onclick="document.getElementById('importFile').click()"><span>导入备份</span><span class="sarr">›</span></div>
+      <div class="set-row" onclick="generateReport()"><span>📊 生成月报图片</span><span class="sarr">›</span></div>
+      <div class="set-row" onclick="clearAll()"><span class="danger">清空全部数据</span><span class="sarr">›</span></div>
+    </div>
+    <div style="text-align:center;color:var(--text2);font-size:11px;padding:8px;">数据存储于浏览器本地 · 建议定期备份</div>
+  </div>
+
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="overlay" id="editModal" style="display:none" onclick="if(event.target===this)closeEdit()">
+  <div class="sheet">
+    <h3>编辑记录</h3>
+    <div class="fr"><select id="eCat"></select></div>
+    <div class="fr"><input id="eAmt" type="number" placeholder="金额" step="0.01" inputmode="decimal"><input id="eDate" type="date"></div>
+    <div class="fr"><input id="eNote" type="text" placeholder="备注"></div>
+    <div class="sheet-btns">
+      <button class="sbtn-danger" onclick="deleteEdit()">删除</button>
+      <button class="sbtn-ghost" onclick="closeEdit()">取消</button>
+      <button class="sbtn-pri" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 分类弹窗 -->
+<div class="overlay" id="catModal" style="display:none" onclick="if(event.target===this)closeCatModal()">
+  <div class="sheet">
+    <h3 id="catModalTitle">添加分类</h3>
+    <div class="emoji-pick" id="emojiPick"></div>
+    <div class="fr"><input id="catName" type="text" placeholder="分类名称"></div>
+    <div class="fr"><select id="catType"><option value="expense">支出</option><option value="income">收入</option></select></div>
+    <div class="sheet-btns">
+      <button class="sbtn-ghost" onclick="closeCatModal()">取消</button>
+      <button class="sbtn-pri" onclick="saveCat()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 月报 Canvas (隐藏) -->
+<canvas id="reportCanvas" width="750" height="1100" style="display:none"></canvas>
+
+<!-- AI 浮动按钮 -->
+<button class="ai-fab" id="aiFab" onclick="openAI()">🤖</button>
+
+<!-- AI 聊天面板 -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-topbar">
+    <span class="ai-title">🤖 AI 助手</span>
+    <div style="display:flex;align-items:center;">
+      <button class="ai-clear" onclick="clearAIChat()">清空</button>
+      <button class="ai-close" onclick="closeAI()">✕</button>
+    </div>
+  </div>
+  <div class="ai-msgs" id="aiMsgs"></div>
+  <div class="ai-suggestions" id="aiSuggestions"></div>
+  <div class="ai-input-row">
+    <button id="aiVoiceBtn" onclick="toggleAIVoice()" style="width:42px;height:42px;border-radius:50%;border:none;background:var(--card2);font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🎤</button>
+    <input id="aiInput" type="text" placeholder="打字或按🎤说话..." onkeydown="if(event.key==='Enter')sendAI()">
+    <button onclick="sendAI()">➤</button>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<nav class="bottom-nav">
+  <div class="nav-item active" data-tab="tabAdd" onclick="switchTab('tabAdd')"><div class="ni">✏️</div><div class="nt">记账</div></div>
+  <div class="nav-item" data-tab="tabList" onclick="switchTab('tabList')"><div class="ni">📋</div><div class="nt">明细</div></div>
+  <div class="nav-item" data-tab="tabStats" onclick="switchTab('tabStats')"><div class="ni">📊</div><div class="nt">统计</div></div>
+  <div class="nav-item" data-tab="tabMe" onclick="switchTab('tabMe')"><div class="ni">⚙️</div><div class="nt">我的</div></div>
+</nav>
+
+<script>
+// ===== 数据层 =====
+const SK='zb2_data',BK='zb2_budget',CK='zb2_cats',STREAK_K='zb2_streak';
+let records=[],budget=0,ctype='expense',cmonth='',editingId=null,catEditId=null,curEmoji='📦',streak=0;
+
+const defaultCats={income:['💰 工资','🧧 红包','📈 理财','💼 兼职','🎁 礼金','↩️ 退款'],expense:['🍜 餐饮','🚌 交通','🛒 购物','🏠 房租','💡 水电','📱 通讯','🎮 娱乐','💊 医疗','👔 服饰','💄 美妆','🎁 礼物']};
+let cats={};
+const EMOJIS=['💰','🧧','📈','💼','🎁','↩️','🍜','🚌','🛒','🏠','💡','📱','🎮','💊','👔','💄','🍕','☕','🚗','🏥','📚','💻','🐱','✈️','🎬','🎵','🏋️'];
+const PCOLORS=['#FF3B30','#FF9500','#FFCC00','#34C759','#007AFF','#5856D6','#AF52DE','#FF2D55','#5AC8FA','#FF6D3A','#8E8E93','#4CD964'];
+
+function sm(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+cmonth=sm();
+
+function load(){
+  try{records=JSON.parse(localStorage.getItem(SK))||[];}catch(e){records=[];}
+  records.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  try{const d=JSON.parse(localStorage.getItem(BK))||{};budget=d[cmonth]||0;}catch(e){budget=0;}
+  document.getElementById('budgetInput').value=budget||'';
+  try{const saved=JSON.parse(localStorage.getItem(CK));cats=saved||JSON.parse(JSON.stringify(defaultCats));}catch(e){cats=JSON.parse(JSON.stringify(defaultCats));}
+  // streak
+  try{streak=parseInt(localStorage.getItem(STREAK_K))||0;}catch(e){streak=0;}
+  updateStreak();
+}
+function save(){localStorage.setItem(SK,JSON.stringify(records));}
+function saveBudget(){let d={};try{d=JSON.parse(localStorage.getItem(BK))||{};}catch(e){}d[cmonth]=budget;localStorage.setItem(BK,JSON.stringify(d));}
+function saveCats(){localStorage.setItem(CK,JSON.stringify(cats));updateCatSelect();renderCatList();}
+
+// ===== 打卡 =====
+function updateStreak(){
+  document.getElementById('streakCount').textContent=streak;
+  const badge=document.getElementById('streakBadge');
+  if(streak>=30)badge.querySelector('.flame').textContent='👑';
+  else if(streak>=7)badge.querySelector('.flame').textContent='🔥';
+  else badge.querySelector('.flame').textContent='⭐';
+}
+function checkStreak(){
+  const today=new Date().toISOString().split('T')[0];
+  const hasToday=records.some(r=>r.date===today);
+  if(hasToday){
+    // check if consecutive
+    let count=0;const d=new Date();
+    for(let i=0;i<365;i++){
+      const ds=d.toISOString().split('T')[0];
+      if(records.some(r=>r.date===ds)){count++;d.setDate(d.getDate()-1);}
+      else break;
+    }
+    streak=count;
+  }else{streak=0;}
+  localStorage.setItem(STREAK_K,streak.toString());
+  updateStreak();
+}
+
+// ===== 暗色模式 =====
+function toggleDark(){
+  const on=document.getElementById('darkToggle').checked;
+  document.documentElement.setAttribute('data-theme',on?'dark':'light');
+  document.querySelector('meta[name="theme-color"]').content=on?'#1A1D25':'#F2F3F6';
+  localStorage.setItem('zb2_dark',on?'1':'0');
+}
+function initDark(){
+  const saved=localStorage.getItem('zb2_dark');
+  if(saved==='1'){document.getElementById('darkToggle').checked=true;document.documentElement.setAttribute('data-theme','dark');document.querySelector('meta[name="theme-color"]').content='#1A1D25';}
+}
+
+// ===== 问候语 =====
+function updateGreeting(){
+  const h=new Date().getHours();
+  let g='';
+  if(h<6)g='夜深了 🌙';
+  else if(h<9)g='早上好 ☀️';
+  else if(h<12)g='上午好 🌤️';
+  else if(h<14)g='中午好 ☀️';
+  else if(h<18)g='下午好 🌈';
+  else if(h<21)g='晚上好 🌆';
+  else g='夜深了 🌙';
+  document.getElementById('greeting').innerHTML=g+'，<b>开始记账吧</b>';
+}
+
+// ===== 语音输入 =====
+let listening=false,recognition=null;
+function toggleVoice(){
+  const btn=document.getElementById('voiceBtn');
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    toast('您的浏览器不支持语音输入');
+    return;
+  }
+  if(listening){stopVoice();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();
+  recognition.lang='zh-CN';
+  recognition.interimResults=false;
+  recognition.maxAlternatives=1;
+  recognition.onstart=()=>{listening=true;btn.classList.add('listening');btn.textContent='🔴';};
+  recognition.onend=()=>{listening=false;btn.classList.remove('listening');btn.textContent='🎙️';};
+  recognition.onerror=()=>{listening=false;btn.classList.remove('listening');btn.textContent='🎙️';};
+  recognition.onresult=(e)=>{
+    const said=e.results[0][0].transcript;
+    // 提取金额
+    const numMatch=said.match(/[\d.]+/);
+    if(numMatch){document.getElementById('amt').value=parseFloat(numMatch[0]);}
+    // 智能匹配分类：遍历所有分类，检查语音中是否提到
+    let matched=null,matchedType=null;
+    ['expense','income'].forEach(type=>{
+      cats[type].forEach(cat=>{
+        const name=cat.replace(/^[^\s]+\s/,''); // 去掉emoji
+        if(said.includes(name)){
+          if(!matched||name.length>matched.length){matched=cat;matchedType=type;}
+        }
+      });
+    });
+    if(matched){
+      if(matchedType!==ctype){setType(matchedType);}
+      document.getElementById('fcat').value=matched;
+    }
+    document.getElementById('fnote').value=said;
+    toast('识别：'+said+(matched?' → '+matched:''));
+    stopVoice();
+  };
+  recognition.start();
+}
+function stopVoice(){if(recognition){try{recognition.stop();}catch(e){}}listening=false;const btn=document.getElementById('voiceBtn');btn.classList.remove('listening');btn.textContent='🎙️';}
+
+// ===== 月份 =====
+function prevMonth(){const[y,m]=cmonth.split('-').map(Number);const d=new Date(y,m-2,1);cmonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');lbm();refresh();}
+function nextMonth(){const[y,m]=cmonth.split('-').map(Number);const d=new Date(y,m,1);cmonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');lbm();refresh();}
+function lbm(){try{const d=JSON.parse(localStorage.getItem(BK))||{};budget=d[cmonth]||0;}catch(e){budget=0;}document.getElementById('budgetInput').value=budget||'';}
+
+// ===== Tab =====
+function switchTab(tabId){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  if(tabId==='tabStats'){renderPie();renderCompare();renderTrend();renderRank();}
+  if(tabId==='tabList')renderRecords();
+  if(tabId==='tabMe')renderCatList();
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));
+}
+
+// ===== 类型 =====
+function setType(t){
+  ctype=t;
+  document.getElementById('btnExp').className=t==='expense'?'eact':'';
+  document.getElementById('btnInc').className=t==='income'?'iact':'';
+  const btn=document.getElementById('addBtn');
+  btn.style.background=t==='expense'?'var(--red)':'var(--green)';
+  btn.textContent=t==='expense'?'记一笔支出':'记一笔收入';
+  updateCatSelect();
+}
+function updateCatSelect(){
+  document.getElementById('fcat').innerHTML=cats[ctype].map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+// ===== 快速模板 =====
+function quickAdd(type,cat,amt,note){setType(type);document.getElementById('amt').value=amt;document.getElementById('fcat').value=cat;document.getElementById('fnote').value=note||'';document.getElementById('amt').focus();toast('已填充 ✓');}
+
+// ===== 添加 =====
+function addRecord(){
+  const amt=parseFloat(document.getElementById('amt').value);
+  if(!amt||amt<=0){toast('请输入金额');return;}
+  records.unshift({id:Date.now(),type:ctype,amount:Math.round(amt*100)/100,category:document.getElementById('fcat').value,date:document.getElementById('fdate').value,note:document.getElementById('fnote').value.trim()});
+  save();
+  document.getElementById('amt').value='';document.getElementById('fnote').value='';document.getElementById('amt').focus();
+  checkStreak();
+  refresh();toast('已记录 ✓');
+}
+
+// ===== 删除 =====
+function deleteRecord(id){if(!confirm('删除这条记录？'))return;records=records.filter(r=>r.id!==id);save();checkStreak();refresh();toast('已删除');}
+function clearAll(){if(!confirm('清空全部数据？'))return;if(!confirm('再次确认？'))return;records=[];save();streak=0;localStorage.setItem(STREAK_K,'0');updateStreak();refresh();toast('已清空');}
+
+// ===== 编辑弹窗 =====
+function openEdit(id){
+  const r=records.find(r=>r.id===id);if(!r)return;editingId=id;
+  const s=document.getElementById('eCat');s.innerHTML=cats[r.type].map(c=>`<option value="${c}" ${c===r.category?'selected':''}>${c}</option>`).join('');
+  document.getElementById('eAmt').value=r.amount;document.getElementById('eDate').value=r.date;document.getElementById('eNote').value=r.note;
+  document.getElementById('editModal').style.display='flex';
+  document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));
+}
+function closeEdit(){document.getElementById('editModal').style.display='none';editingId=null;}
+function saveEdit(){
+  if(editingId===null)return;const r=records.find(r=>r.id===editingId);if(!r)return;
+  const amt=parseFloat(document.getElementById('eAmt').value);if(!amt||amt<=0){toast('请输入金额');return;}
+  r.category=document.getElementById('eCat').value;r.amount=Math.round(amt*100)/100;r.date=document.getElementById('eDate').value;r.note=document.getElementById('eNote').value.trim();
+  save();closeEdit();refresh();toast('已保存 ✓');
+}
+function deleteEdit(){if(editingId===null)return;if(!confirm('确定删除？'))return;records=records.filter(r=>r.id!==editingId);save();closeEdit();refresh();toast('已删除');}
+
+// ===== 预算 =====
+function setBudget(){const v=parseFloat(document.getElementById('budgetInput').value);if(!v||v<=0){toast('请输入预算金额');return;}budget=v;saveBudget();updateBudget();toast('预算已设置 ✓');}
+function updateBudget(){
+  const bar=document.getElementById('bfill');
+  const me=records.filter(r=>r.date.startsWith(cmonth)&&r.type==='expense').reduce((s,r)=>s+r.amount,0);
+  document.getElementById('bUsed').textContent='已用 ¥'+me.toFixed(0);
+  if(!budget){bar.style.width='0%';bar.style.background='';document.getElementById('bRemain').textContent='未设置预算';return;}
+  const pct=Math.min(100,Math.round(me/budget*100));bar.style.width=pct+'%';
+  bar.style.background=pct<50?'linear-gradient(90deg,#34C759,#28A745)':pct<80?'linear-gradient(90deg,#FFCC00,#FF9500)':'linear-gradient(90deg,#FF3B30,#D63031)';
+  const rem=budget-me;const re=document.getElementById('bRemain');re.textContent=rem>=0?'剩余 ¥'+rem.toFixed(0):'超支 ¥'+Math.abs(rem).toFixed(0);re.style.color=rem<0?'var(--red)':'';
+}
+
+// ===== 汇总 =====
+function renderSummary(){
+  const mr=records.filter(r=>r.date.startsWith(cmonth));
+  let inc=0,exp=0;mr.forEach(r=>{if(r.type==='income')inc+=r.amount;else exp+=r.amount;});
+  document.getElementById('sInc').textContent='¥'+inc.toFixed(2);
+  document.getElementById('sExp').textContent='¥'+exp.toFixed(2);
+  const bal=inc-exp;const bel=document.getElementById('sBal');bel.textContent='¥'+bal.toFixed(2);bel.style.color=bal>=0?'var(--pri)':'var(--red)';
+  document.getElementById('monthLabel').textContent=cmonth.replace('-','年')+'月';
+}
+
+// ===== 记录列表 =====
+function renderRecords(){
+  const kw=document.getElementById('search').value.trim().toLowerCase();
+  const mr=records.filter(r=>r.date.startsWith(cmonth));
+  const filtered=kw?mr.filter(r=>r.note.toLowerCase().includes(kw)||r.category.includes(kw)):mr;
+  document.getElementById('recCount').textContent=mr.length+' 条';
+  const c=document.getElementById('recList');
+  if(filtered.length===0){c.innerHTML=`<div class="empty"><div class="eicon">${kw?'🔍':'📋'}</div><div>${kw?'无匹配记录':'暂无记录'}</div></div>`;return;}
+  const todayStr=new Date().toISOString().split('T')[0];
+  const yesterday=new Date(Date.now()-86400000).toISOString().split('T')[0];
+  const groups={};filtered.forEach(r=>{if(!groups[r.date])groups[r.date]=[];groups[r.date].push(r);});
+  function dl(d){if(d===todayStr)return'今天';if(d===yesterday)return'昨天';const dt=new Date(d+'T00:00:00');return(dt.getMonth()+1)+'/'+dt.getDate()+' 周'+['日','一','二','三','四','五','六'][dt.getDay()];}
+  let html='';
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
+    const items=groups[date];let de=0,di=0;items.forEach(r=>{if(r.type==='expense')de+=r.amount;else di+=r.amount;});
+    let sh='';if(de>0&&di>0)sh=`支出 <span class="ex">¥${de.toFixed(0)}</span> · 收入 <span class="in">¥${di.toFixed(0)}</span>`;else if(de>0)sh=`支出 <span class="ex">¥${de.toFixed(0)}</span>`;else if(di>0)sh=`收入 <span class="in">¥${di.toFixed(0)}</span>`;
+    html+=`<div class="day-group"><div class="day-header"><span class="dlabel">${dl(date)}</span><span class="dsum">${sh}</span></div>`;
+    items.forEach(r=>{const ii=r.type==='income';html+=`<div class="rec-row"><div class="rec-item" data-id="${r.id}" ontouchstart="ts(event,${r.id})" ontouchmove="tm(event)" ontouchend="te(event,${r.id})" onclick="openEdit(${r.id})"><div class="ricon ${ii?'i':'e'}">${r.category.slice(0,2)}</div><div class="rinfo"><div class="cat">${r.category}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div><div class="ramt ${ii?'i':'e'}">${ii?'+':'-'}¥${r.amount.toFixed(2)}</div><div class="rdot" onclick="event.stopPropagation();deleteRecord(${r.id})">⋯</div></div><div class="rec-actions"><button class="act-edit" onclick="openEdit(${r.id})">编辑</button><button class="act-del" onclick="deleteRecord(${r.id})">删除</button></div></div>`;});
+    html+='</div>';
+  });
+  c.innerHTML=html;
+}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ===== 滑动 =====
+let tSX=0,tSY=0,swEl=null;
+function ts(e,id){tSX=e.touches[0].clientX;tSY=e.touches[0].clientY;if(swEl&&swEl!==e.currentTarget){swEl.classList.remove('swiped');}}
+function tm(e){}
+function te(e,id){const el=e.currentTarget;const dx=e.changedTouches[0].clientX-tSX;const dy=e.changedTouches[0].clientY-tSY;if(Math.abs(dx)>30&&Math.abs(dx)>Math.abs(dy)){if(dx<0){el.classList.add('swiped');swEl=el;}else{el.classList.remove('swiped');swEl=null;}}}
+
+// ===== 饼图 =====
+function renderPie(){
+  const cv=document.getElementById('pieCanvas');const ctx=cv.getContext('2d');const w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);
+  const mr=records.filter(r=>r.date.startsWith(cmonth)&&r.type==='expense');
+  const map={};let total=0;mr.forEach(r=>{const cat=r.category.replace(/^[^\s]+\s/,'');map[cat]=(map[cat]||0)+r.amount;total+=r.amount;});
+  const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);const leg=document.getElementById('pieLegend');
+  if(!entries.length){ctx.fillStyle=getComputedStyle(document.body).color;ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('暂无支出数据',w/2,h/2);leg.innerHTML='';return;}
+  const cx=w/2,cy=h/2,r=90;let sa=-Math.PI/2;
+  entries.forEach((e,i)=>{const slice=e[1]/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,sa,sa+slice);ctx.closePath();ctx.fillStyle=PCOLORS[i%PCOLORS.length];ctx.fill();if(slice>0.3){const ma=sa+slice/2;ctx.fillStyle='#fff';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(Math.round(e[1]/total*100)+'%',cx+Math.cos(ma)*r*0.62,cy+Math.sin(ma)*r*0.62);}sa+=slice;});
+  ctx.beginPath();ctx.arc(cx,cy,38,0,Math.PI*2);ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--card');ctx.fill();
+  leg.innerHTML=entries.slice(0,6).map((e,i)=>`<span><span class="dot" style="background:${PCOLORS[i]}"></span>${e[0]} ${Math.round(e[1]/total*100)}%</span>`).join('');
+}
+
+// ===== 消费趋势图 =====
+function renderTrend(){
+  const cv=document.getElementById('trendCanvas');const ctx=cv.getContext('2d');
+  const daysInMonth=new Date(parseInt(cmonth.split('-')[0]),parseInt(cmonth.split('-')[1]),0).getDate();
+  cv.width=Math.max(340,daysInMonth*16+40);const w=cv.width,h=cv.height=200;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const textColor=isDark?'#8B8F9A':'#8B8F9A';const gridColor=isDark?'#2A2D35':'#EBECF0';const lineColor='#5B6AF0';
+  ctx.clearRect(0,0,w,h);
+  const pad={top:24,right:16,bottom:36,left:40};
+  const pw=w-pad.left-pad.right,ph=h-pad.top-pad.bottom;
+
+  // daily data
+  const daily=[];let maxVal=0;
+  for(let day=1;day<=daysInMonth;day++){
+    const ds=cmonth+'-'+String(day).padStart(2,'0');
+    const exp=records.filter(r=>r.date===ds&&r.type==='expense').reduce((s,r)=>s+r.amount,0);
+    daily.push({day,exp});if(exp>maxVal)maxVal=exp;
+  }
+  maxVal=Math.ceil(maxVal/100)*100+100;if(maxVal<200)maxVal=200;
+  const steps=4;
+
+  // grid
+  ctx.strokeStyle=gridColor;ctx.lineWidth=1;
+  for(let i=0;i<=steps;i++){const y=pad.top+ph-(ph/steps*i);ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();ctx.fillStyle=textColor;ctx.font='10px sans-serif';ctx.textAlign='right';ctx.fillText('¥'+(maxVal/steps*i).toFixed(0),pad.left-6,y+4);}
+  // x labels
+  ctx.fillStyle=textColor;ctx.font='10px sans-serif';ctx.textAlign='center';
+  for(let i=0;i<daily.length;i+=Math.max(1,Math.floor(daily.length/15))){
+    ctx.fillText(daily[i].day+'日',pad.left+(i/(daily.length-1))*pw,h-pad.bottom+16);
+  }
+
+  // bar chart
+  const barW=Math.max(6,Math.min(14,pw/daily.length-4));
+  daily.forEach((d,i)=>{
+    const x=pad.left+(i/(daily.length-1))*pw-barW/2;
+    const barH=(d.exp/maxVal)*ph;
+    if(barH>0){ctx.fillStyle='rgba(91,106,240,0.5)';ctx.fillRect(x,pad.top+ph-barH,barW,barH);ctx.fillStyle=lineColor;ctx.fillRect(x,pad.top+ph-barH,barW,Math.min(3,barH));}
+  });
+
+  // zero line
+  ctx.strokeStyle=isDark?'#fff':'#000';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.left,pad.top+ph);ctx.lineTo(w-pad.right,pad.top+ph);ctx.stroke();
+}
+
+// ===== 消费排行 =====
+function renderRank(){
+  const mr=records.filter(r=>r.date.startsWith(cmonth)&&r.type==='expense');
+  const map={};let total=0;mr.forEach(r=>{const cat=r.category.replace(/^[^\s]+\s/,'');map[cat]=(map[cat]||0)+r.amount;total+=r.amount;});
+  const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const el=document.getElementById('rankList');
+  if(!entries.length){el.innerHTML='<div class="empty" style="padding:20px;"><div style="font-size:14px;">暂无数据</div></div>';return;}
+  el.innerHTML=entries.map((e,i)=>{
+    const pct=total>0?Math.round(e[1]/total*100):0;
+    const color=PCOLORS[i%PCOLORS.length];
+    return `<div class="rank-item">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-info">
+        <div class="rcat">${e[0]}</div>
+        <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>
+      <div class="rank-amt">¥${e[1].toFixed(0)} <span style="font-size:11px;color:var(--text2);">${pct}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== 环比 =====
+function renderCompare(){
+  const[y,m]=cmonth.split('-').map(Number);const pm=new Date(y,m-2,1);const prev=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');
+  function mt(m,t){return records.filter(r=>r.date.startsWith(m)&&r.type===t).reduce((s,r)=>s+r.amount,0);}
+  const ic=mt(cmonth,'income'),ec=mt(cmonth,'expense'),ip=mt(prev,'income'),ep=mt(prev,'expense');
+  function tag(c,p){if(p===0)return'<span class="tag flat">新增</span>';const pct=Math.round((c-p)/p*100);if(pct>0)return`<span class="tag up">↑${pct}%</span>`;if(pct<0)return`<span class="tag down">↓${Math.abs(pct)}%</span>`;return'<span class="tag flat">持平</span>';}
+  document.getElementById('cmpInc').innerHTML='¥'+ic.toFixed(0)+' '+tag(ic,ip);
+  document.getElementById('cmpExp').innerHTML='¥'+ec.toFixed(0)+' '+tag(ec,ep);
+}
+
+// ===== 月报生成 =====
+function generateReport(){
+  const cv=document.getElementById('reportCanvas');const ctx=cv.getContext('2d');const w=cv.width,h=cv.height;
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const bg=isDark?'#1A1D25':'#FFFFFF';const fg=isDark?'#E8EAED':'#1A1C21';const sub=isDark?'#8B8F9A':'#8B8F9A';
+  // BG
+  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  // Header
+  const grd=ctx.createLinearGradient(0,0,0,300);grd.addColorStop(0,isDark?'#2A2050':'#EEF1FE');grd.addColorStop(1,bg);
+  ctx.fillStyle=grd;ctx.fillRect(0,0,w,280);
+  ctx.fillStyle=fg;ctx.font='bold 36px "PingFang SC","Microsoft YaHei",sans-serif';ctx.textAlign='center';ctx.fillText('📒 '+cmonth.replace('-','年')+'月 消费报告',w/2,80);
+  ctx.fillStyle=sub;ctx.font='18px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillText(new Date().toLocaleDateString('zh-CN'),w/2,120);
+
+  // Summary
+  const mr=records.filter(r=>r.date.startsWith(cmonth));let inc=0,exp=0;mr.forEach(r=>{if(r.type==='income')inc+=r.amount;else exp+=r.amount;});
+  const boxes=[{label:'收入',val:'¥'+inc.toFixed(2),color:'#34C759',x:80},{label:'支出',val:'¥'+exp.toFixed(2),color:'#FF3B30',x:w/2-40},{label:'结余',val:'¥'+(inc-exp).toFixed(2),color:'#5B6AF0',x:w-280}];
+  boxes.forEach(b=>{
+    ctx.fillStyle=bg;ctx.strokeStyle='rgba(0,0,0,0.06)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(b.x,150,160,80,14);ctx.fill();ctx.stroke();
+    ctx.fillStyle=sub;ctx.font='13px "PingFang SC","Microsoft YaHei",sans-serif';ctx.textAlign='center';ctx.fillText(b.label,b.x+80,178);
+    ctx.fillStyle=b.color;ctx.font='bold 22px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillText(b.val,b.x+80,210);
+  });
+
+  // Pie chart
+  const pieMap={};let pieTotal=0;mr.filter(r=>r.type==='expense').forEach(r=>{const cat=r.category.replace(/^[^\s]+\s/,'');pieMap[cat]=(pieMap[cat]||0)+r.amount;pieTotal+=r.amount;});
+  const pieEntries=Object.entries(pieMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(pieEntries.length){
+    const pcx=180,pcy=400,pr=90;let sa=-Math.PI/2;
+    pieEntries.forEach((e,i)=>{const slice=e[1]/pieTotal*Math.PI*2;ctx.beginPath();ctx.moveTo(pcx,pcy);ctx.arc(pcx,pcy,pr,sa,sa+slice);ctx.closePath();ctx.fillStyle=PCOLORS[i];ctx.fill();sa+=slice;});
+    ctx.beginPath();ctx.arc(pcx,pcy,40,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+    // legend
+    ctx.textAlign='left';
+    pieEntries.forEach((e,i)=>{
+      ctx.fillStyle=PCOLORS[i];ctx.fillRect(320,350+i*35,14,14);
+      ctx.fillStyle=fg;ctx.font='16px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillText(e[0]+'  ¥'+e[1].toFixed(0)+' ('+Math.round(e[1]/pieTotal*100)+'%)',342,363+i*35);
+    });
+  }
+
+  // Footer
+  ctx.fillStyle=sub;ctx.font='13px "PingFang SC","Microsoft YaHei",sans-serif';ctx.textAlign='center';ctx.fillText('由「我的账本」生成 · 坚持记账，掌控生活',w/2,h-40);
+
+  // Download
+  cv.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='月报_'+cmonth+'.png';a.click();URL.revokeObjectURL(url);toast('月报已下载 ✓');
+  },'image/png');
+}
+
+// ===== 分类管理 =====
+function renderCatList(){
+  const el=document.getElementById('catList');let html='';
+  ['expense','income'].forEach(type=>{html+=`<div class="set-row" style="font-size:12px;color:var(--text2);font-weight:600;padding:8px 16px;background:var(--card2);">${type==='expense'?'支出分类':'收入分类'}</div>`;cats[type].forEach((cat,i)=>{const isDefault=defaultCats[type]&&defaultCats[type].includes(cat);html+=`<div class="cat-row"><span>${cat}</span><div class="cat-actions"><button onclick="editCat('${type}',${i})">✏️</button>${!isDefault?`<button onclick="deleteCat('${type}',${i})">🗑️</button>`:''}</div></div>`;});});
+  el.innerHTML=html;
+}
+function addCategory(){catEditId=null;curEmoji='📦';document.getElementById('catModalTitle').textContent='添加分类';document.getElementById('catName').value='';document.getElementById('catType').value='expense';renderEmojiPick();document.getElementById('catModal').style.display='flex';}
+function editCat(type,idx){catEditId={type,idx};const cat=cats[type][idx];curEmoji=cat.slice(0,2);document.getElementById('catModalTitle').textContent='编辑分类';document.getElementById('catName').value=cat.slice(2).trim();document.getElementById('catType').value=type;renderEmojiPick();document.getElementById('catModal').style.display='flex';}
+function deleteCat(type,idx){if(!confirm('删除"'+cats[type][idx]+'"？'))return;cats[type].splice(idx,1);saveCats();toast('已删除');}
+function closeCatModal(){document.getElementById('catModal').style.display='none';catEditId=null;}
+function saveCat(){const name=document.getElementById('catName').value.trim();const type=document.getElementById('catType').value;if(!name){toast('请输入名称');return;}const full=curEmoji+' '+name;if(catEditId){cats[catEditId.type][catEditId.idx]=full;}else{if(cats[type].includes(full)){toast('分类已存在');return;}cats[type].push(full);}saveCats();closeCatModal();toast('已保存 ✓');}
+function renderEmojiPick(){document.getElementById('emojiPick').innerHTML=EMOJIS.map(e=>`<button class="${e===curEmoji?'sel':''}" onclick="curEmoji='${e}';renderEmojiPick()">${e}</button>`).join('');}
+
+// ===== 导出/导入 =====
+function exportCSV(){if(!records.length){toast('无数据');return;}const bom='﻿';const csv=bom+'日期,类型,分类,金额,备注\n'+records.map(r=>`${r.date},${r.type==='income'?'收入':'支出'},"${r.category}",${r.amount},"${r.note.replace(/"/g,'""')}"`).join('\n');download(csv,'账本_'+cmonth+'.csv','text/csv;charset=utf-8');toast('导出成功 ✓');}
+function exportJSON(){if(!records.length){toast('无数据');return;}download(JSON.stringify({records,cats,budgets:JSON.parse(localStorage.getItem(BK)||'{}'),streak},null,2),'账本备份_'+cmonth+'.json','application/json');toast('备份成功 ✓');}
+function download(content,filename,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);}
+function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){try{const data=JSON.parse(ev.target.result);const recs=data.records||data;if(!Array.isArray(recs))throw new Error('fmt');recs.forEach(r=>{if(!r.id||!r.type||!r.amount||!r.date)throw new Error('field');});const seen=new Set();const dedup=[];[...recs,...records].forEach(r=>{if(!seen.has(r.id)){seen.add(r.id);dedup.push(r);}});dedup.sort((a,b)=>new Date(b.date)-new Date(a.date));records=dedup;if(data.cats)cats=data.cats;if(data.budgets)localStorage.setItem(BK,JSON.stringify(data.budgets));if(data.streak!==undefined){streak=data.streak;localStorage.setItem(STREAK_K,streak.toString());updateStreak();}save();saveCats();load();refresh();toast('导入成功 ✓ ('+recs.length+'条)');}catch(err){toast('导入失败：格式不正确');}};r.readAsText(f);e.target.value='';}
+
+// ===== Toast =====
+function toast(msg){const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity 0.3s';},1300);setTimeout(()=>el.remove(),1600);}
+
+// ===== 刷新 =====
+function refresh(){renderSummary();updateBudget();renderRecords();}
+function tick(){const n=new Date();updateGreeting();}
+
+// ===== AI 助手 =====
+let aiHistory=[];
+
+// ===== FAB 拖拽 =====
+let fabDrag=false,fabMoved=false,fabSX=0,fabSY=0,fabOX=0,fabOY=0;
+function initFabDrag(){
+  const fab=document.getElementById('aiFab');
+  const saved=localStorage.getItem('zb2_fab_pos');
+  if(saved){const[p,s]=saved.split(',');fab.style.bottom=p;fab.style.right=s;}
+  fab.addEventListener('touchstart',fabStart,{passive:false});
+  fab.addEventListener('mousedown',fabStart);
+  document.addEventListener('touchmove',fabMove,{passive:false});
+  document.addEventListener('touchend',fabEnd);
+  document.addEventListener('mousemove',fabMove);
+  document.addEventListener('mouseup',fabEnd);
+}
+function fabStart(e){
+  if(e.type==='mousedown'&&e.button!==0)return;
+  const fab=document.getElementById('aiFab');
+  fabDrag=true;fabMoved=false;
+  const p=e.touches?e.touches[0]:e;
+  fabSX=p.clientX;fabSY=p.clientY;
+  fabOX=parseFloat(fab.style.right)||parseFloat(getComputedStyle(fab).right)||14;
+  fabOY=parseFloat(fab.style.bottom)||parseFloat(getComputedStyle(fab).bottom)||80;
+}
+function fabMove(e){
+  if(!fabDrag)return;
+  const fab=document.getElementById('aiFab');
+  const p=e.touches?e.touches[0]:e;
+  const dx=p.clientX-fabSX,dy=p.clientY-fabSY;
+  if(Math.abs(dx)<4&&Math.abs(dy)<4)return;
+  if(!fabMoved){fabMoved=true;fab.classList.add('dragging');e.preventDefault();}
+  const newR=Math.max(0,Math.min(window.innerWidth-54,fabOX-dx));
+  const newB=Math.max(0,Math.min(window.innerHeight-54,fabOY-dy));
+  fab.style.right=newR+'px';
+  fab.style.bottom=newB+'px';
+}
+function fabEnd(){
+  if(!fabDrag)return;
+  const fab=document.getElementById('aiFab');
+  fabDrag=false;fab.classList.remove('dragging');
+  if(fabMoved){
+    const r=parseFloat(fab.style.right)||14;
+    const snapped=window.innerWidth/2>r+25?Math.max(4,r):4;
+    fab.style.right=snapped+'px';
+    fab.style.transition='right 0.2s, bottom 0.2s';
+    setTimeout(()=>fab.style.transition='box-shadow 0.2s',200);
+    localStorage.setItem('zb2_fab_pos',[fab.style.bottom,fab.style.right].join(','));
+  }
+}
+
+function openAI(){
+  document.getElementById('aiPanel').classList.add('show');
+  document.getElementById('aiFab').style.display='none';
+  document.getElementById('aiInput').focus();
+  if(!aiHistory.length){showWelcome();}
+  renderSuggestions();
+}
+function closeAI(){
+  document.getElementById('aiPanel').classList.remove('show');
+  document.getElementById('aiFab').style.display='flex';
+}
+function clearAIChat(){aiHistory=[];document.getElementById('aiMsgs').innerHTML='';showWelcome();}
+
+function showWelcome(){
+  const now=new Date();const h=now.getHours();
+  let g=h<9?'早上':h<12?'上午':h<14?'中午':h<18?'下午':'晚上';
+  addAIMsg('assistant',g+'好！我是你的智能记账助手 🤖\n你可以直接问我：\n· 「这个月花了多少」\n· 「餐饮花了多少」\n· 「记一笔午餐 25」\n· 「哪个分类最多」\n· 「还剩下多少预算」');
+}
+
+function renderSuggestions(){
+  document.getElementById('aiSuggestions').innerHTML=[
+    '这个月花了多少','餐饮花了多少','哪个分类最多',
+    '今天花了多少','还剩多少预算','记一笔午餐25'
+  ].map(s=>`<button onclick="sendAI('${s}')">${s}</button>`).join('');
+}
+
+function addAIMsg(role,text,autoSpeak){
+  aiHistory.push({role,text,time:Date.now()});
+  const container=document.getElementById('aiMsgs');
+  const div=document.createElement('div');
+  div.className='ai-msg '+role;
+  const avatar=role==='assistant'?'🤖':'😊';
+  const speakBtn=role==='assistant'?`<button onclick="speakText('${text.replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' ')}')" style="background:none;border:none;font-size:14px;cursor:pointer;margin-top:2px;opacity:0.5;" title="播放语音">🔊</button>`:'';
+  div.innerHTML=`<div class="ai-avatar">${avatar}</div><div><div class="ai-bubble">${text.replace(/\n/g,'<br>')}</div>${speakBtn}</div>`;
+  container.appendChild(div);
+  container.scrollTop=container.scrollHeight;
+  if(autoSpeak&&role==='assistant')speakText(text);
+}
+
+// ===== 语音合成 (TTS) =====
+let cachedVoices=[],selectedVoiceURI='';
+
+function preloadVoices(){
+  if(!('speechSynthesis' in window))return;
+  cachedVoices=speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged=()=>{
+    cachedVoices=speechSynthesis.getVoices();
+    renderVoiceList();
+  };
+  // 自动推荐最佳女声
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  const best=zh.find(v=>v.name.includes('Ting-Ting'))||zh.find(v=>v.name.includes('Huihui'))||zh.find(v=>v.name.includes('Xiaoxiao'))||zh.find(v=>v.name.includes('Mei-Jia'))||zh.find(v=>isFemaleVoice(v.name));
+  if(best&&!localStorage.getItem('zb2_voice')){selectedVoiceURI=best.voiceURI;localStorage.setItem('zb2_voice',best.voiceURI);}
+  else{selectedVoiceURI=localStorage.getItem('zb2_voice')||'';}
+}
+
+// 识别女声关键词
+function isFemaleVoice(name){
+  const kw=['Ting','Tingting','Huihui','Mei','Meijia','Xiaoxiao','Sin-Ji','Ya-Ling','Hanhan','Li-Mu','Ting-Ting','Mei-Jia','Yue','Yating','Shasha','Xiaomeng','Nuannuan','Tiantian','Wanwan'];
+  return kw.some(k=>name.includes(k));
+}
+function getVoiceLabel(v){
+  if(isFemaleVoice(v.name))return '👩 女声';
+  if(/male|nan|男/i.test(v.name))return '👨 男声';
+  return v.name.includes('Google')?'🔊 通用':'📢 通用';
+}
+
+function renderVoiceList(){
+  const el=document.getElementById('voiceList');
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  if(!zh.length){
+    el.innerHTML='<div class="set-row" style="color:var(--text2);cursor:default;flex-direction:column;gap:4px;"><span>未找到中文语音</span><span style="font-size:11px;">iOS: 系统设置→辅助功能→朗读内容→语音→下载中文(增强)</span></div>';
+    return;
+  }
+  // 女声排前面
+  zh.sort((a,b)=>(isFemaleVoice(b.name)?1:0)-(isFemaleVoice(a.name)?1:0));
+  el.innerHTML=zh.map(v=>{
+    const sel=v.voiceURI===selectedVoiceURI;
+    const label=getVoiceLabel(v);
+    return `<div class="set-row" onclick="selectVoice('${v.voiceURI.replace(/'/g,'')}')" style="${sel?'background:var(--pri-light);':''}">
+      <span>${sel?'✅ ':''}${v.name}<span style="font-size:10px;color:var(--text2);margin-left:4px;">${label}</span></span>
+      <button onclick="event.stopPropagation();previewVoice('${v.voiceURI.replace(/'/g,'')}')" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px 8px;">🔊</button>
+    </div>`;
+  }).join('');
+}
+
+function selectVoice(uri){
+  selectedVoiceURI=uri;
+  localStorage.setItem('zb2_voice',uri);
+  renderVoiceList();
+  toast('已切换语音 ✓');
+}
+
+function previewVoice(uri){
+  const v=cachedVoices.find(v=>v.voiceURI===uri);
+  if(!v)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance('你好呀，我是你的记账小助手，很高兴陪着你');
+  u.voice=v;u.rate=0.9;u.volume=1;
+  speechSynthesis.speak(u);
+}
+
+function speakText(text){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const clean=text.replace(/\n/g,'，').replace(/[^一-鿿\w\s，。！？、：；（）「」【】¥%+-]/g,'').trim();
+  if(!clean)return;
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='zh-CN';u.rate=0.9;u.pitch=1.1;u.volume=1;
+
+  // 用已保存的语音
+  if(selectedVoiceURI){
+    const saved=cachedVoices.find(v=>v.voiceURI===selectedVoiceURI);
+    if(saved){u.voice=saved;speechSynthesis.speak(u);return;}
+  }
+  // 自动找中文女声
+  const kw=['Ting-Ting','Tingting','Huihui','Mei-Jia','Meijia','Xiaoxiao','Sin-Ji'];
+  const zh=cachedVoices.filter(v=>v.lang.includes('zh'));
+  let pick=null;
+  for(const k of kw){pick=zh.find(v=>v.name.includes(k));if(pick)break;}
+  if(!pick)pick=zh[0];
+  if(pick)u.voice=pick;
+  speechSynthesis.speak(u);
+}
+
+// ===== AI 语音输入 =====
+let aiListening=false,aiRecognition=null;
+function toggleAIVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    toast('您的浏览器不支持语音输入');return;
+  }
+  if(aiListening){stopAIVoice();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  aiRecognition=new SR();
+  aiRecognition.lang='zh-CN';aiRecognition.interimResults=false;
+  const btn=document.getElementById('aiVoiceBtn');
+  aiRecognition.onstart=()=>{aiListening=true;btn.textContent='🔴';btn.style.background='var(--red-bg)';};
+  aiRecognition.onend=()=>{aiListening=false;btn.textContent='🎤';btn.style.background='';};
+  aiRecognition.onerror=()=>{aiListening=false;btn.textContent='🎤';btn.style.background='';};
+  aiRecognition.onresult=(e)=>{
+    const said=e.results[0][0].transcript;
+    document.getElementById('aiInput').value=said;
+    stopAIVoice();
+    sendAI(null,true);
+  };
+  aiRecognition.start();
+}
+function stopAIVoice(){if(aiRecognition){try{aiRecognition.stop();}catch(e){}}aiListening=false;const btn=document.getElementById('aiVoiceBtn');btn.textContent='🎤';btn.style.background='';}
+
+function sendAI(preset,autoSpeak){
+  const input=document.getElementById('aiInput');
+  const text=(preset||input.value).trim();
+  if(!text)return;
+  if(!preset){input.value='';}
+  addAIMsg('user',text);
+  const reply=nlu(text);
+  setTimeout(()=>addAIMsg('assistant',reply,autoSpeak),300+Math.random()*500);
+  renderSuggestions();
+}
+
+// NLU 引擎
+function nlu(q){
+  const s=q.replace(/[？?！!。，,]/g,' ').trim();
+  const lower=s.toLowerCase();
+
+  // 帮助
+  if(/帮助|能做什么|功能|help/.test(lower)){
+    return '我可以帮你：\n📊 查询：花了多少 / 收入多少 / 结余\n🏷️ 分类查询：餐饮多少 / 交通多少\n📅 时间查询：今天花了多少 / 昨天 / 本月\n💡 智能记账：记一笔 + 分类 + 金额\n🏆 排行：哪个分类最多\n🎯 预算：还剩多少预算\n\n试试问我吧！';
+  }
+
+  // 记账意图："记一笔午餐25" "记上 交通 10块" "添加 娱乐 120" "午餐 25"
+  const addMatch=s.match(/(?:记一笔|记上|添加|记录|花了?|消费了?|用了?|买了?|花了?)\s*([一-龥]+)\s*(\d+(?:\.\d+)?)/);
+  const simpleAdd=s.match(/^([一-龥]{1,6})\s*(\d+(?:\.\d+)?)$/);
+  const add=(addMatch||simpleAdd);
+  if(add){
+    const catName=add[1];const amt=parseFloat(add[2]);
+    // match category
+    let foundCat=null,foundType='expense';
+    ['expense','income'].forEach(type=>{
+      cats[type].forEach(cat=>{
+        const cn=cat.replace(/^[^\s]+\s/,'');
+        if(cn.includes(catName)||catName.includes(cn)||catName===cn){foundCat=cat;foundType=type;}
+      });
+    });
+    if(!foundCat){foundCat=cats.expense.find(c=>c.includes('其他'))||cats.expense[cats.expense.length-1];}
+    records.unshift({id:Date.now(),type:foundType,amount:Math.round(amt*100)/100,category:foundCat,date:new Date().toISOString().split('T')[0],note:s});
+    save();refresh();checkStreak();
+    return '✅ 已记录：'+foundCat+' ¥'+amt.toFixed(2)+'\n'+(foundType==='income'?'收入':'支出')+'已记好，继续加油 🔥';
+  }
+
+  // 删除最后一条
+  if(/删除.*(最后|最近|上一条)/.test(lower)){
+    if(records.length===0)return '没有记录可删除哦~';
+    const last=records[0];
+    records.shift();save();refresh();checkStreak();
+    return '🗑️ 已删除：'+last.category+' ¥'+last.amount.toFixed(2);
+  }
+
+  // 查询：花了多少 / 支出 / 消费
+  const isExpQuery=/花了?|支出|消费|用了/.test(lower)&&!/收入|赚了?|进账/.test(lower);
+  const isIncQuery=/收入|赚了?|进账|工资/.test(lower)&&!/花了?|支出/.test(lower);
+  const isBalQuery=/结余|余额|还剩|剩下|净/.test(lower);
+  const isBudgetQuery=/预算/.test(lower);
+  const isRankQuery=/最多|排行|排名|哪个.*(多|高|大)/.test(lower);
+  const isCatQuery=!/今天|昨天|本月|这个月|最近/.test(lower)&&!/记/.test(lower);
+
+  // 时间范围
+  let dateFilter=null,dateLabel='';
+  if(/今天|今日/.test(lower)){dateFilter=new Date().toISOString().split('T')[0];dateLabel='今天';}
+  else if(/昨天|昨日/.test(lower)){const d=new Date(Date.now()-86400000);dateFilter=d.toISOString().split('T')[0];dateLabel='昨天';}
+  else if(/本周|这周/.test(lower)){const d=new Date();const dow=d.getDay();const mon=new Date(d.getFullYear(),d.getMonth(),d.getDate()-dow+1);dateFilter=mon.toISOString().split('T')[0];dateLabel='本周';}
+  else if(/本月|这个月/.test(lower)){dateFilter=cmonth;dateLabel='本月';}
+  else if(/最近(\d+)天/.test(lower)){const n=parseInt(lower.match(/最近(\d+)天/)[1]);const d=new Date(Date.now()-(n-1)*86400000);dateFilter=d.toISOString().split('T')[0];dateLabel='最近'+n+'天';}
+
+  // 分类查询
+  let catFilter=null;
+  const allCats=[...cats.expense,...cats.income];
+  allCats.forEach(cat=>{
+    const cn=cat.replace(/^[^\s]+\s/,'');
+    if(lower.includes(cn))catFilter=cat;
+  });
+
+  // 查询分类
+  if(isCatQuery&&catFilter&&!isRankQuery){
+    let recs=records;
+    if(dateFilter){recs=recs.filter(r=>r.date>=dateFilter);}
+    else{recs=recs.filter(r=>r.date.startsWith(cmonth));}
+    recs=recs.filter(r=>r.category===catFilter);
+    const total=recs.reduce((s,r)=>s+r.amount,0);
+    const count=recs.length;
+    const label=dateLabel||'本月';
+    return '📊 '+label+'「'+catFilter+'」\n共 '+count+' 笔，合计 ¥'+total.toFixed(2);
+  }
+
+  // 排行
+  if(isRankQuery){
+    let recs=records.filter(r=>r.date.startsWith(cmonth)&&r.type==='expense');
+    const map={};let grand=0;
+    recs.forEach(r=>{const cn=r.category.replace(/^[^\s]+\s/,'');map[cn]=(map[cn]||0)+r.amount;grand+=r.amount;});
+    const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length)return '本月还没有支出记录~';
+    let reply='🏆 本月消费排行：\n';
+    entries.slice(0,5).forEach((e,i)=>{
+      const medal=['🥇','🥈','🥉','4️⃣','5️⃣'][i];
+      reply+=medal+' '+e[0]+' ¥'+e[1].toFixed(0)+' ('+Math.round(e[1]/grand*100)+'%)\n';
+    });
+    reply+='\n合计 ¥'+grand.toFixed(0);
+    return reply;
+  }
+
+  // 预算
+  if(isBudgetQuery){
+    const me=records.filter(r=>r.date.startsWith(cmonth)&&r.type==='expense').reduce((s,r)=>s+r.amount,0);
+    if(!budget)return '你还没有设置本月预算哦～在首页输入预算金额即可 🎯';
+    const rem=budget-me;
+    const pct=Math.round(me/budget*100);
+    let emoji=pct<50?'😊':pct<80?'😐':'😰';
+    return '🎯 本月预算：¥'+budget.toFixed(0)+'\n已用：¥'+me.toFixed(0)+' ('+pct+'%)\n剩余：¥'+rem.toFixed(0)+' '+emoji+(rem<0?'\n⚠️ 已超支，注意控制！':'');
+  }
+
+  // 结余
+  if(isBalQuery){
+    let recs=records;
+    if(dateFilter){recs=recs.filter(r=>r.date>=dateFilter);}
+    else{recs=recs.filter(r=>r.date.startsWith(cmonth));}
+    const inc=recs.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0);
+    const exp=recs.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0);
+    const bal=inc-exp;
+    const label=dateLabel||'本月';
+    return '💰 '+label+'财务概况：\n收入 ¥'+inc.toFixed(2)+'\n支出 ¥'+exp.toFixed(2)+'\n结余 ¥'+bal.toFixed(2)+(bal<0?'\n⚠️ 入不敷出！':' ✅');
+  }
+
+  // 支出查询 (default)
+  let recs=records;
+  if(dateFilter){recs=recs.filter(r=>r.date>=dateFilter);}
+  else{recs=recs.filter(r=>r.date.startsWith(cmonth));}
+  const inc=recs.filter(r=>r.type==='income').reduce((s,r)=>s+r.amount,0);
+  const exp=recs.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0);
+
+  if(isIncQuery){
+    const label=dateLabel||'本月';
+    return '📈 '+label+'收入：¥'+inc.toFixed(2)+'\n共 '+recs.filter(r=>r.type==='income').length+' 笔';
+  }
+
+  // 默认：支出 + 概况
+  const label=dateLabel||'本月';
+  let reply='📊 '+label+'支出：¥'+exp.toFixed(2)+'（'+recs.filter(r=>r.type==='expense').length+' 笔）';
+  if(inc>0)reply+='\n收入：¥'+inc.toFixed(2);
+  reply+='\n结余：¥'+(inc-exp).toFixed(2);
+  // 加一句建议
+  if(!dateFilter){
+    if(budget&&exp>budget)reply+='\n\n⚠️ 已超出预算 ¥'+(exp-budget).toFixed(0)+'，注意控制哦~';
+    else if(budget&&exp>budget*0.8)reply+='\n\n⚡ 已使用预算 '+Math.round(exp/budget*100)+'%，加油控制！';
+  }
+  return reply;
+}
+
+// ===== 初始化 =====
+function init(){
+  document.getElementById('fdate').value=new Date().toISOString().split('T')[0];
+  initDark();initFabDrag();preloadVoices();tick();setInterval(tick,3600000);
+  load();setType('expense');updateCatSelect();refresh();checkStreak();
+  document.addEventListener('click',function(e){if(!e.target.closest('.rec-item')){document.querySelectorAll('.rec-item.swiped').forEach(el=>el.classList.remove('swiped'));}});
+  window.addEventListener('resize',()=>{if(document.getElementById('tabStats').classList.contains('active'))renderTrend();});
+  if('serviceWorker' in navigator){const swCode=`const CACHE='zb-v8';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/'])));self.skipWaiting();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{if(resp.ok){const cl=resp.clone();caches.open(CACHE).then(c=>c.put(e.request,cl));}return resp;})))});`;const blob=new Blob([swCode],{type:'application/javascript'});navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});}
+}
+init();
+</script>
+</body>
+</html>
